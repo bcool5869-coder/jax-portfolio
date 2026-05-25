@@ -15,15 +15,23 @@
 /* ─── VARIABLES ─────────────────────────────────────── */
 :root{
   --bg:#010c14;--bg2:#010e18;--text:#f0f0f0;
-  /* Muted: white-based so it reads on BOTH dark sections AND glass surfaces */
   --muted:rgba(255,255,255,.50);
-  --accent:#CAFF00;--border:rgba(255,255,255,.07);
+  --accent:#CAFF00;
+  /* Water-tinted border — matches aquarium palette */
+  --border:rgba(80,200,240,.12);
   --card:rgba(0,20,35,.55);
   --max:1400px;--pad:clamp(24px,5.5vw,90px);
-  /* Glass text hierarchy (Apple Liquid Glass uses white opacity tiers) */
-  --gt1:#ffffff;               /* primary on glass   */
-  --gt2:rgba(255,255,255,.75); /* secondary on glass */
-  --gt3:rgba(255,255,255,.48); /* tertiary / labels  */
+  /* Glass text hierarchy */
+  --gt1:#ffffff;
+  --gt2:rgba(255,255,255,.75);
+  --gt3:rgba(255,255,255,.48);
+  /* Water palette — harmonises with aquarium video */
+  --water:#22d3ee;
+  --water-deep:rgba(8,50,100,.52);
+  --water-glass:rgba(8,45,90,.18);  /* blue-tinted glass for cards */
+  --water-border:rgba(80,200,240,.22);
+  /* Section glass — replaces opaque dark blocks */
+  --sec-glass:rgba(3,18,50,.48);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px;scroll-behavior:auto}
@@ -64,7 +72,8 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 /* dark teal overlay so text stays readable over the video */
 #aquaOverlay{
   position:fixed;inset:0;z-index:1;pointer-events:none;
-  background:rgba(0,8,20,.50);
+  /* Lighter overlay — aquarium vivid and immersive */
+  background:rgba(0,6,18,.28);
 }
 
 /* ─── PROGRESS ───────────────────────────────────────── */
@@ -87,11 +96,11 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 /* ─── NAV ────────────────────────────────────────────── */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.5rem var(--pad);transition:background .4s,backdrop-filter .4s}
 .nav.scrolled{
-  background:rgba(255,255,255,.11);
-  backdrop-filter:blur(44px) saturate(200%) brightness(1.08);
-  -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.08);
-  border-bottom:1px solid rgba(255,255,255,.22);
-  box-shadow:inset 0 -1px 0 rgba(255,255,255,.18),0 8px 32px rgba(0,0,0,.32);
+  background:rgba(4,22,58,.55);
+  backdrop-filter:blur(44px) saturate(200%) brightness(1.04);
+  -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.04);
+  border-bottom:1px solid rgba(80,200,240,.24);
+  box-shadow:inset 0 -1px 0 rgba(80,200,240,.12),0 8px 32px rgba(0,10,40,.38);
 }
 .nav-logo{font-family:'Clash Display',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.04em}
 .accent-dot{color:var(--accent)}
@@ -153,7 +162,15 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 
 /* ─── LAYOUT ─────────────────────────────────────────── */
 .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
-.section{padding:clamp(80px,10vw,150px) 0;background:rgba(0,8,20,.72)}
+.section{
+  padding:clamp(80px,10vw,150px) 0;
+  /* Glass panel — aquarium shows through blurred */
+  background:var(--sec-glass);
+  backdrop-filter:blur(28px) saturate(160%) brightness(.92);
+  -webkit-backdrop-filter:blur(28px) saturate(160%) brightness(.92);
+  border-top:1px solid var(--water-border);
+  border-bottom:1px solid rgba(80,200,240,.08);
+}
 .section-label{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
 .section-label::before{content:'';display:block;width:1.8rem;height:1px;background:var(--accent)}
 .section-title{font-family:'Clash Display',sans-serif;font-size:clamp(36px,5.2vw,88px);font-weight:700;line-height:1.0;letter-spacing:-.035em;margin-bottom:3rem}
@@ -239,7 +256,14 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .scroll-lbl{font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gt3);writing-mode:vertical-rl}
 
 /* ─── MARQUEE ────────────────────────────────────────── */
-.marquee-section{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.3rem 0;background:rgba(0,8,20,.78)}
+.marquee-section{
+  overflow:hidden;padding:1.3rem 0;
+  background:rgba(0,10,30,.55);
+  backdrop-filter:blur(36px) saturate(170%) brightness(.88);
+  -webkit-backdrop-filter:blur(36px) saturate(170%) brightness(.88);
+  border-top:1px solid var(--water-border);
+  border-bottom:1px solid var(--water-border);
+}
 .mq-row{display:flex;overflow:hidden;padding:.2rem 0}
 .mq-inner{display:flex;align-items:center;gap:2rem;white-space:nowrap;flex-shrink:0;padding-right:2rem}
 .mq-inner.fwd{animation:mq 28s linear infinite}
@@ -249,7 +273,14 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* ─── EDITORIAL ──────────────────────────────────────── */
-.editorial{padding:clamp(80px,12vw,180px) 0;border-bottom:1px solid var(--border);background:rgba(0,8,20,.72)}
+.editorial{
+  padding:clamp(80px,12vw,180px) 0;
+  background:rgba(5,22,58,.42);
+  backdrop-filter:blur(24px) saturate(155%) brightness(.94);
+  -webkit-backdrop-filter:blur(24px) saturate(155%) brightness(.94);
+  border-top:1px solid var(--water-border);
+  border-bottom:1px solid rgba(80,200,240,.08);
+}
 .editorial-stmt{
   font-family:'Clash Display',sans-serif;
   font-size:clamp(26px,4.2vw,74px);
@@ -266,8 +297,8 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 
 /* ─── WORK ───────────────────────────────────────────── */
 .work-header{margin-bottom:0;padding-bottom:3rem}
-.work-rows{border-top:1px solid var(--border)}
-.work-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);min-height:500px;overflow:hidden;cursor:pointer;transition:background .3s}
+.work-rows{border-top:1px solid var(--water-border)}
+.work-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--water-border);min-height:500px;overflow:hidden;cursor:pointer;transition:background .3s}
 .work-row:nth-child(even){direction:rtl}
 .work-row:nth-child(even)>*{direction:ltr}
 .work-visual{position:relative;overflow:hidden;background:#080808}
@@ -278,12 +309,12 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .work-row:hover .work-sheen{opacity:1}
 .work-info{
   padding:clamp(40px,5vw,78px);display:flex;flex-direction:column;justify-content:center;
-  border-left:1px solid rgba(255,255,255,.14);position:relative;transition:background .3s;
-  background:rgba(255,255,255,.09);
-  backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
-  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
+  border-left:1px solid rgba(80,200,240,.18);position:relative;transition:background .3s;
+  background:rgba(6,40,85,.22);
+  backdrop-filter:blur(32px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.04);
 }
-.work-row:nth-child(even) .work-info{border-left:none;border-right:1px solid rgba(255,255,255,.08)}
+.work-row:nth-child(even) .work-info{border-left:none;border-right:1px solid rgba(80,200,240,.16)}
 .work-row:hover .work-info{background:rgba(255,255,255,.07)}
 .work-idx{font-size:.66rem;font-weight:700;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.9rem}
 .work-info h3{font-family:'Clash Display',sans-serif;font-size:clamp(1.65rem,2.8vw,2.75rem);font-weight:700;letter-spacing:-.03em;margin-bottom:.8rem;line-height:1.05;text-shadow:0 1px 3px rgba(0,0,0,.5)}
@@ -295,13 +326,13 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .work-row:hover .work-arrow{background:var(--accent);color:var(--bg);transform:rotate(45deg)}
 
 /* ─── SERVICES ───────────────────────────────────────── */
-.svc-list{border-top:1px solid var(--border);margin-top:0}
-.svc-item{border-bottom:1px solid rgba(255,255,255,.08);transition:background .3s}
+.svc-list{border-top:1px solid var(--water-border);margin-top:0}
+.svc-item{border-bottom:1px solid rgba(80,200,240,.10);transition:background .3s}
 .svc-item.open{
-  background:rgba(255,255,255,.08);
-  backdrop-filter:blur(28px) saturate(180%) brightness(1.06);
-  -webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.06);
-  border-bottom:1px solid rgba(255,255,255,.18);
+  background:rgba(8,55,110,.20);
+  backdrop-filter:blur(28px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.05);
+  border-bottom:1px solid rgba(80,200,240,.22);
 }
 .svc-head{display:flex;align-items:center;justify-content:space-between;padding:2rem 0;cursor:pointer;user-select:none;transition:color .2s}
 .svc-head:hover{color:var(--accent)}
@@ -321,25 +352,26 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .testi-card{
   border-radius:22px;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem;
   transition:transform .38s cubic-bezier(.34,1.56,.64,1),box-shadow .38s;
-  /* Apple Liquid Glass: visible frosted surface */
-  background:rgba(255,255,255,.13);
-  backdrop-filter:blur(36px) saturate(190%) brightness(1.07);
-  -webkit-backdrop-filter:blur(36px) saturate(190%) brightness(1.07);
-  border:1px solid rgba(255,255,255,.24);
+  /* Water Liquid Glass — blue-tinted frosted surface */
+  background:rgba(8,55,110,.22);
+  backdrop-filter:blur(36px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter:blur(36px) saturate(200%) brightness(1.08);
+  border:1px solid rgba(80,200,240,.28);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,.52),
-    inset 0 -1px 0 rgba(0,0,0,.18),
-    0 8px 32px rgba(0,0,0,.38);
+    inset 0 1.5px 0 rgba(120,220,255,.40),
+    inset 0 -1px 0 rgba(0,0,0,.22),
+    0 8px 40px rgba(0,20,60,.50);
   position:relative;overflow:hidden;
   color:var(--gt1);
 }
 .testi-card::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(255,255,255,.16) 0%,transparent 70%);
+  /* Water caustic specular — follows cursor */
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(100,220,255,.18) 0%,rgba(50,150,220,.06) 50%,transparent 75%);
   pointer-events:none;z-index:0;transition:background .25s ease;
 }
 .testi-card>*{position:relative;z-index:1}
-.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 24px 64px rgba(0,0,0,.48)}
+.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(120,220,255,.55),0 24px 64px rgba(0,20,80,.55),0 0 40px rgba(30,180,240,.10)}
 .testi-stars{color:var(--accent);font-size:.9rem;letter-spacing:.12em;text-shadow:0 0 12px rgba(202,255,0,.4)}
 /* Quote text: Apple glass vibrancy — white with slight shadow for depth */
 .testi-card p{font-size:.88rem;color:var(--gt2);line-height:1.75;flex:1;font-style:italic;text-shadow:0 1px 3px rgba(0,0,0,.55)}
@@ -349,7 +381,13 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .testi-role{font-size:.74rem;color:var(--gt3);margin-top:.1rem}
 
 /* ─── TALK ───────────────────────────────────────────── */
-.talk-section{padding:clamp(80px,12vw,180px) 0;border-top:1px solid var(--border);overflow:hidden;background:rgba(0,8,20,.72)}
+.talk-section{
+  padding:clamp(80px,12vw,180px) 0;overflow:hidden;
+  background:rgba(4,20,52,.46);
+  backdrop-filter:blur(26px) saturate(155%) brightness(.92);
+  -webkit-backdrop-filter:blur(26px) saturate(155%) brightness(.92);
+  border-top:1px solid var(--water-border);
+}
 .talk-lbl{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
 .talk-lbl::before{content:'';display:block;width:1.8rem;height:1px;background:var(--accent)}
 .talk-email{
@@ -377,21 +415,21 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .soc-link:hover{color:var(--accent);border-color:rgba(202,255,0,.35);background:rgba(202,255,0,.06);transform:translateY(-2px)}
 .contact-form{
   border-radius:22px;padding:clamp(24px,3.5vw,44px);display:flex;flex-direction:column;gap:1.2rem;
-  /* Apple Liquid Glass */
-  background:rgba(255,255,255,.13);
-  backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
-  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
-  border:1px solid rgba(255,255,255,.26);
+  /* Water Liquid Glass */
+  background:rgba(8,55,110,.22);
+  backdrop-filter:blur(44px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.06);
+  border:1px solid rgba(80,200,240,.28);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,.55),
-    inset 0 -1px 0 rgba(0,0,0,.20),
-    0 12px 48px rgba(0,0,0,.42);
+    inset 0 1.5px 0 rgba(120,220,255,.40),
+    inset 0 -1px 0 rgba(0,0,0,.22),
+    0 16px 56px rgba(0,20,60,.55);
   position:relative;overflow:hidden;
   color:var(--gt1);
 }
 .contact-form::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(255,255,255,.18) 0%,transparent 72%);
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(100,220,255,.16) 0%,rgba(50,150,220,.05) 50%,transparent 75%);
   pointer-events:none;z-index:0;transition:background .25s ease;
 }
 .contact-form>*{position:relative;z-index:1}
@@ -400,20 +438,20 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .fg label{font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gt3)}
 /* Inputs: glass-on-glass treatment — slightly lighter tint */
 .fg input,.fg select,.fg textarea{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.20);
+  background:rgba(10,60,120,.22);
+  border:1px solid rgba(80,200,240,.22);
   border-radius:10px;padding:.88rem 1.1rem;
   font-size:.93rem;color:var(--gt1);
   font-family:inherit;outline:none;
   transition:border-color .2s,background .2s,box-shadow .2s;
   cursor:none;-webkit-appearance:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
-  text-shadow:0 1px 2px rgba(0,0,0,.4);
+  box-shadow:inset 0 1px 0 rgba(100,220,255,.15);
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
 .fg input:focus,.fg select:focus,.fg textarea:focus{
   border-color:rgba(202,255,0,.55);
-  background:rgba(202,255,0,.06);
-  box-shadow:inset 0 1px 0 rgba(202,255,0,.2),0 0 0 2px rgba(202,255,0,.12);
+  background:rgba(202,255,0,.05);
+  box-shadow:inset 0 1px 0 rgba(202,255,0,.2),0 0 0 2px rgba(202,255,0,.10);
 }
 .fg input::placeholder,.fg textarea::placeholder{color:rgba(255,255,255,.32)}
 .fg select option{background:#111;color:#fff}
@@ -429,7 +467,13 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .btn-outline:hover{border-color:rgba(255,255,255,.32);transform:translateY(-2px)}
 
 /* ─── FOOTER ─────────────────────────────────────────── */
-.footer{padding:3rem 0;border-top:1px solid var(--border);background:rgba(0,5,10,.92)}
+.footer{
+  padding:3rem 0;
+  background:rgba(0,8,25,.68);
+  backdrop-filter:blur(40px) saturate(150%) brightness(.85);
+  -webkit-backdrop-filter:blur(40px) saturate(150%) brightness(.85);
+  border-top:1px solid var(--water-border);
+}
 .footer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1.5rem}
 .footer-logo{font-family:'Clash Display',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.04em}
 .footer-nav{display:flex;gap:2rem;flex-wrap:wrap}
@@ -1301,23 +1345,35 @@ function initHeroMesh(){
       varying vec3 vNormal;
       varying vec3 vPos;
       void main(){
-        vec3 lime=vec3(0.792,1.0,0.0);
-        /* Near-black base with very faint dark teal */
-        vec3 base=vec3(0.004,0.010,0.006);
-        float elev=clamp(vElevation*2.0+.45,0.,1.);
+        /* Water/Liquid Glass orb — matches aquarium background */
+        vec3 oceanDeep   = vec3(0.01,0.08,0.20);   /* deep ocean blue   */
+        vec3 oceanMid    = vec3(0.04,0.22,0.40);   /* mid-water teal    */
+        vec3 caustic     = vec3(0.10,0.68,0.88);   /* bright caustic    */
+        vec3 highlight   = vec3(0.78,0.97,1.00);   /* white water rim   */
+        vec3 lime        = vec3(0.792,1.0,0.0);    /* accent on edge    */
 
-        /* SHARP Fresnel — exponent 5 = ONLY the very edge silhouette glows */
+        float elev=clamp(vElevation*2.2+.50,0.,1.);
         float nDotV=max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.);
-        float fresnel=pow(1.-nDotV,5.0);
+        float fresnel=pow(1.-nDotV,2.8);           /* rim light         */
+        float sharpRim=pow(1.-nDotV,5.5);          /* thin edge accent  */
 
-        /* Interior: near-invisible dark. Displacement peaks get tiny teal hint */
-        vec3 col=base+vec3(0.03,0.12,0.09)*elev*.2;
+        /* Interior: ocean colour varies with displacement */
+        vec3 col=mix(oceanDeep,oceanMid,elev);
 
-        /* Lime: razor-thin rim at silhouette only */
-        col+=lime*fresnel*.9;
+        /* Caustic glow at rim — like light through water */
+        col+=caustic*fresnel*.55;
+        col+=highlight*fresnel*.30;
 
-        /* Alpha: center = 0 (fully invisible), rim = 0.95 (solid lime line) */
-        float alpha=pow(fresnel,.6)*.95+elev*.03;
+        /* Very thin lime edge — brand accent, barely visible */
+        col+=lime*sharpRim*.28;
+
+        /* Specular hotspot — water droplet sparkle */
+        float spec=pow(nDotV,18.0);
+        col+=highlight*spec*.55;
+
+        /* Alpha: semi-transparent body (aquarium shows through)
+           opaque at the glowing rim */
+        float alpha=mix(0.45,0.90,fresnel)+elev*0.06;
         gl_FragColor=vec4(col,clamp(alpha,0.,1.));
       }
     `,
@@ -1334,16 +1390,16 @@ function initHeroMesh(){
   const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.77,10),wireMat);
   scene.add(wire);
 
-  /* Orbital ring */
-  const ringGeo=new THREE.TorusGeometry(2.8,.008,4,120);
-  const ringMat=new THREE.MeshBasicMaterial({color:0xCAFF00,transparent:true,opacity:.28});
+  /* Orbital rings — water teal to match orb */
+  const ringGeo=new THREE.TorusGeometry(2.6,.006,4,120);
+  const ringMat=new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:.22});
   const ring=new THREE.Mesh(ringGeo,ringMat);
   ring.rotation.x=Math.PI*.35;
   scene.add(ring);
 
   const ring2=new THREE.Mesh(
-    new THREE.TorusGeometry(3.4,.005,4,120),
-    new THREE.MeshBasicMaterial({color:0xCAFF00,transparent:true,opacity:.1})
+    new THREE.TorusGeometry(3.2,.004,4,120),
+    new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:.10})
   );
   ring2.rotation.x=Math.PI*.55;ring2.rotation.z=Math.PI*.2;
   scene.add(ring2);
@@ -1353,7 +1409,8 @@ function initHeroMesh(){
   for(let i=0;i<700*3;i++)pBuf[i]=(Math.random()-.5)*14;
   const pGeo=new THREE.BufferGeometry();
   pGeo.setAttribute('position',new THREE.BufferAttribute(pBuf,3));
-  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xCAFF00,size:.018,transparent:true,opacity:.38})));
+  /* Particles — mix of water-teal and faint lime */
+  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0x44ddee,size:.016,transparent:true,opacity:.30})));
 
   /* Mouse tracking */
   let mx=0,my=0;
