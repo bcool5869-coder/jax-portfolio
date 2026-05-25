@@ -1259,8 +1259,8 @@ function initHeroMesh(){
   renderer.setSize(parent.offsetWidth,parent.offsetHeight);
 
   const scene=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(48,parent.offsetWidth/parent.offsetHeight,.1,100);
-  cam.position.z=5.2;
+  const cam=new THREE.PerspectiveCamera(42,parent.offsetWidth/parent.offsetHeight,.1,100);
+  cam.position.z=6.2;
 
   /* ── Morphing sphere ── */
   const uTime={value:0};
@@ -1302,18 +1302,22 @@ function initHeroMesh(){
       varying vec3 vPos;
       void main(){
         vec3 lime=vec3(0.792,1.0,0.0);
-        /* Very dark base — almost black-green, barely visible in center */
-        vec3 base=vec3(0.008,0.028,0.012);
-        float t=clamp(vElevation*1.6+.4,0.,1.);
-        /* Base color: nearly invisible in center, slightly brighter at peaks */
-        vec3 col=mix(base,base*2.4,t);
-        /* Fresnel rim: lime ONLY at silhouette edges — the signature look */
-        float fresnel=pow(1.-max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.),1.6);
-        col+=lime*fresnel*.72;
-        /* Very subtle interior lime shimmer at displaced peaks */
-        col+=lime*.035*t;
-        /* Alpha: mostly transparent in center, solid lime glow at rim */
-        float alpha=mix(0.18,0.82,fresnel)+t*0.07;
+        /* Near-black base with very faint dark teal */
+        vec3 base=vec3(0.004,0.010,0.006);
+        float elev=clamp(vElevation*2.0+.45,0.,1.);
+
+        /* SHARP Fresnel — exponent 5 = ONLY the very edge silhouette glows */
+        float nDotV=max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.);
+        float fresnel=pow(1.-nDotV,5.0);
+
+        /* Interior: near-invisible dark. Displacement peaks get tiny teal hint */
+        vec3 col=base+vec3(0.03,0.12,0.09)*elev*.2;
+
+        /* Lime: razor-thin rim at silhouette only */
+        col+=lime*fresnel*.9;
+
+        /* Alpha: center = 0 (fully invisible), rim = 0.95 (solid lime line) */
+        float alpha=pow(fresnel,.6)*.95+elev*.03;
         gl_FragColor=vec4(col,clamp(alpha,0.,1.));
       }
     `,
@@ -1321,13 +1325,13 @@ function initHeroMesh(){
     side:THREE.FrontSide,
   });
 
-  const sphereGeo=new THREE.IcosahedronGeometry(2.0,64);
+  const sphereGeo=new THREE.IcosahedronGeometry(1.75,64);
   const sphere=new THREE.Mesh(sphereGeo,morphMat);
   scene.add(sphere);
 
   /* Wireframe overlay — very faint, just suggests structure */
-  const wireMat=new THREE.MeshBasicMaterial({color:0xCAFF00,wireframe:true,transparent:true,opacity:.022});
-  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(2.02,10),wireMat);
+  const wireMat=new THREE.MeshBasicMaterial({color:0xCAFF00,wireframe:true,transparent:true,opacity:.018});
+  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.77,10),wireMat);
   scene.add(wire);
 
   /* Orbital ring */
