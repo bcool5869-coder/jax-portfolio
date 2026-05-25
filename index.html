@@ -14,24 +14,31 @@
 <style>
 /* ─── VARIABLES ─────────────────────────────────────── */
 :root{
-  --bg:#010c14;--bg2:#010e18;--text:#f0f0f0;
-  --muted:rgba(255,255,255,.50);
+  --bg:#010c14;--bg2:#1c1c1e;--text:#ebebf5;
+  /* ── Apple exact values ──────────────────────────────── */
+  /* Primary label   */ --gt1:#ebebf5;
+  /* Secondary label */ --gt2:rgba(235,235,245,.60);
+  /* Tertiary label  */ --gt3:rgba(235,235,245,.30);
+  /* Quaternary      */ --gt4:rgba(235,235,245,.18);
+  --muted:rgba(235,235,245,.60);
+  /* Apple separators */
+  --sep:rgba(84,84,88,.60);
+  --sep-solid:#38383a;
+  /* Apple system fills */
+  --fill1:rgba(120,120,128,.20);
+  --fill2:rgba(120,120,128,.16);
+  /* Apple glass */
+  --glass-bg:rgba(255,255,255,.12);
+  --glass-border:rgba(255,255,255,.22);
+  --glass-top:rgba(255,255,255,.55);
+  /* Brand */
   --accent:#CAFF00;
-  /* Water-tinted border — matches aquarium palette */
-  --border:rgba(80,200,240,.12);
-  --card:rgba(0,20,35,.55);
   --max:1400px;--pad:clamp(24px,5.5vw,90px);
-  /* Glass text hierarchy */
-  --gt1:#ffffff;
-  --gt2:rgba(255,255,255,.75);
-  --gt3:rgba(255,255,255,.48);
-  /* Water palette — harmonises with aquarium video */
-  --water:#22d3ee;
-  --water-deep:rgba(8,50,100,.52);
-  --water-glass:rgba(8,45,90,.18);  /* blue-tinted glass for cards */
-  --water-border:rgba(80,200,240,.22);
-  /* Section glass — replaces opaque dark blocks */
+  /* Water palette (section-level only — sections stay water-themed) */
+  --water:#64D2FF;           /* Apple's official Teal */
+  --water-border:rgba(80,200,240,.20);
   --sec-glass:rgba(3,18,50,.48);
+  --border:rgba(84,84,88,.40);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px;scroll-behavior:auto}
@@ -96,11 +103,12 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 /* ─── NAV ────────────────────────────────────────────── */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.5rem var(--pad);transition:background .4s,backdrop-filter .4s}
 .nav.scrolled{
-  background:rgba(4,22,58,.55);
-  backdrop-filter:blur(44px) saturate(200%) brightness(1.04);
-  -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.04);
-  border-bottom:1px solid rgba(80,200,240,.24);
-  box-shadow:inset 0 -1px 0 rgba(80,200,240,.12),0 8px 32px rgba(0,10,40,.38);
+  /* Apple: dark system background + blur = frosted bar */
+  background:rgba(28,28,30,.82);
+  backdrop-filter:blur(44px) saturate(180%) brightness(1.02);
+  -webkit-backdrop-filter:blur(44px) saturate(180%) brightness(1.02);
+  border-bottom:1px solid var(--sep);
+  box-shadow:0 1px 0 rgba(84,84,88,.30),0 8px 32px rgba(0,0,0,.35);
 }
 .nav-logo{font-family:'Clash Display',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.04em}
 .accent-dot{color:var(--accent)}
@@ -122,39 +130,36 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
    APPLE LIQUID GLASS SYSTEM
 ═══════════════════════════════════════════════════════ */
 .glass{
-  /* Apple Liquid Glass: frosted white tint, strong blur, adaptive */
-  background:rgba(255,255,255,.13);
-  backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
-  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
-  border:1px solid rgba(255,255,255,.26);
+  background:var(--glass-bg);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
+  border:1px solid var(--glass-border);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,.55),   /* top edge catch-light */
-    inset 0 -1px 0 rgba(0,0,0,.20),           /* bottom inner shadow */
-    inset 1px 0 0 rgba(255,255,255,.10),      /* left edge glow */
-    inset -1px 0 0 rgba(255,255,255,.06),     /* right edge glow */
-    0 8px 32px rgba(0,0,0,.42),
-    0 2px 8px rgba(0,0,0,.24);
+    inset 0 1.5px 0 var(--glass-top),
+    inset 0 -1px 0 rgba(0,0,0,.20),
+    inset 1px 0 0 rgba(255,255,255,.08),
+    inset -1px 0 0 rgba(255,255,255,.05),
+    0 8px 32px rgba(0,0,0,.40),
+    0 2px 8px rgba(0,0,0,.22);
   position:relative;overflow:hidden;
-  /* Vibrancy: text inside glass must pop off the surface */
   color:var(--gt1);
 }
-/* Specular sheen — follows cursor via --mx/--my custom props */
+/* Specular sheen — Apple warm-white, follows cursor */
 .glass::before{
   content:'';position:absolute;inset:0;
   background:radial-gradient(
     ellipse 80% 55% at var(--mx,50%) var(--my,28%),
-    rgba(255,255,255,.18) 0%,
-    rgba(255,255,255,.06) 50%,
+    rgba(235,235,245,.16) 0%,
+    rgba(235,235,245,.05) 50%,
     transparent 78%
   );
-  pointer-events:none;z-index:0;
-  transition:background .25s ease;
+  pointer-events:none;z-index:0;transition:background .25s ease;
 }
-/* Top edge catch-light strip */
+/* Top catch-light — Apple's signature bright edge */
 .glass::after{
   content:'';position:absolute;
   top:0;left:8%;right:8%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7) 40%,rgba(255,255,255,.7) 60%,transparent);
+  background:linear-gradient(90deg,transparent,rgba(235,235,245,.75) 40%,rgba(235,235,245,.75) 60%,transparent);
   pointer-events:none;
 }
 /* Make sure children sit above the sheen */
@@ -309,10 +314,10 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .work-row:hover .work-sheen{opacity:1}
 .work-info{
   padding:clamp(40px,5vw,78px);display:flex;flex-direction:column;justify-content:center;
-  border-left:1px solid rgba(80,200,240,.18);position:relative;transition:background .3s;
-  background:rgba(6,40,85,.22);
-  backdrop-filter:blur(32px) saturate(180%) brightness(1.04);
-  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.04);
+  border-left:1px solid var(--glass-border);position:relative;transition:background .3s;
+  background:rgba(255,255,255,.10);
+  backdrop-filter:blur(32px) saturate(200%) brightness(1.05);
+  -webkit-backdrop-filter:blur(32px) saturate(200%) brightness(1.05);
 }
 .work-row:nth-child(even) .work-info{border-left:none;border-right:1px solid rgba(80,200,240,.16)}
 .work-row:hover .work-info{background:rgba(255,255,255,.07)}
@@ -329,10 +334,11 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .svc-list{border-top:1px solid var(--water-border);margin-top:0}
 .svc-item{border-bottom:1px solid rgba(80,200,240,.10);transition:background .3s}
 .svc-item.open{
-  background:rgba(8,55,110,.20);
-  backdrop-filter:blur(28px) saturate(180%) brightness(1.05);
-  -webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.05);
-  border-bottom:1px solid rgba(80,200,240,.22);
+  /* Apple secondary fill */
+  background:var(--fill2);
+  backdrop-filter:blur(28px) saturate(200%) brightness(1.04);
+  -webkit-backdrop-filter:blur(28px) saturate(200%) brightness(1.04);
+  border-bottom:1px solid var(--sep);
 }
 .svc-head{display:flex;align-items:center;justify-content:space-between;padding:2rem 0;cursor:pointer;user-select:none;transition:color .2s}
 .svc-head:hover{color:var(--accent)}
@@ -352,26 +358,26 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .testi-card{
   border-radius:22px;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem;
   transition:transform .38s cubic-bezier(.34,1.56,.64,1),box-shadow .38s;
-  /* Water Liquid Glass — blue-tinted frosted surface */
-  background:rgba(8,55,110,.22);
-  backdrop-filter:blur(36px) saturate(200%) brightness(1.08);
-  -webkit-backdrop-filter:blur(36px) saturate(200%) brightness(1.08);
-  border:1px solid rgba(80,200,240,.28);
+  /* Apple Liquid Glass — exact values */
+  background:var(--glass-bg);
+  backdrop-filter:blur(36px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter:blur(36px) saturate(200%) brightness(1.06);
+  border:1px solid var(--glass-border);
   box-shadow:
-    inset 0 1.5px 0 rgba(120,220,255,.40),
+    inset 0 1.5px 0 var(--glass-top),
     inset 0 -1px 0 rgba(0,0,0,.22),
-    0 8px 40px rgba(0,20,60,.50);
+    0 8px 40px rgba(0,0,0,.42);
   position:relative;overflow:hidden;
   color:var(--gt1);
 }
 .testi-card::before{
   content:'';position:absolute;inset:0;
-  /* Water caustic specular — follows cursor */
-  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(100,220,255,.18) 0%,rgba(50,150,220,.06) 50%,transparent 75%);
+  /* Apple warm-white specular — follows cursor */
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(235,235,245,.16) 0%,rgba(235,235,245,.04) 55%,transparent 76%);
   pointer-events:none;z-index:0;transition:background .25s ease;
 }
 .testi-card>*{position:relative;z-index:1}
-.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(120,220,255,.55),0 24px 64px rgba(0,20,80,.55),0 0 40px rgba(30,180,240,.10)}
+.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(235,235,245,.65),0 24px 64px rgba(0,0,0,.50)}
 .testi-stars{color:var(--accent);font-size:.9rem;letter-spacing:.12em;text-shadow:0 0 12px rgba(202,255,0,.4)}
 /* Quote text: Apple glass vibrancy — white with slight shadow for depth */
 .testi-card p{font-size:.88rem;color:var(--gt2);line-height:1.75;flex:1;font-style:italic;text-shadow:0 1px 3px rgba(0,0,0,.55)}
@@ -411,25 +417,25 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .ci-val{font-size:.97rem;font-weight:500;color:var(--accent);transition:opacity .2s}
 .ci-val:hover{opacity:.7}
 .social-row{display:flex;flex-wrap:wrap;gap:.65rem}
-.soc-link{font-size:.78rem;font-weight:600;color:var(--gt2);border:1px solid rgba(255,255,255,.16);padding:.44rem 1rem;border-radius:100px;transition:color .2s,border-color .2s,background .2s,transform .2s;background:rgba(255,255,255,.05)}
+.soc-link{font-size:.78rem;font-weight:600;color:var(--gt2);border:1px solid var(--sep);padding:.44rem 1rem;border-radius:100px;transition:color .2s,border-color .2s,background .2s,transform .2s;background:var(--fill2)}
 .soc-link:hover{color:var(--accent);border-color:rgba(202,255,0,.35);background:rgba(202,255,0,.06);transform:translateY(-2px)}
 .contact-form{
   border-radius:22px;padding:clamp(24px,3.5vw,44px);display:flex;flex-direction:column;gap:1.2rem;
-  /* Water Liquid Glass */
-  background:rgba(8,55,110,.22);
+  /* Apple Liquid Glass — exact values */
+  background:var(--glass-bg);
   backdrop-filter:blur(44px) saturate(200%) brightness(1.06);
   -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.06);
-  border:1px solid rgba(80,200,240,.28);
+  border:1px solid var(--glass-border);
   box-shadow:
-    inset 0 1.5px 0 rgba(120,220,255,.40),
+    inset 0 1.5px 0 var(--glass-top),
     inset 0 -1px 0 rgba(0,0,0,.22),
-    0 16px 56px rgba(0,20,60,.55);
+    0 16px 56px rgba(0,0,0,.44);
   position:relative;overflow:hidden;
   color:var(--gt1);
 }
 .contact-form::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(100,220,255,.16) 0%,rgba(50,150,220,.05) 50%,transparent 75%);
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(235,235,245,.16) 0%,rgba(235,235,245,.04) 55%,transparent 76%);
   pointer-events:none;z-index:0;transition:background .25s ease;
 }
 .contact-form>*{position:relative;z-index:1}
@@ -438,22 +444,23 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .fg label{font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gt3)}
 /* Inputs: glass-on-glass treatment — slightly lighter tint */
 .fg input,.fg select,.fg textarea{
-  background:rgba(10,60,120,.22);
-  border:1px solid rgba(80,200,240,.22);
+  /* Apple System Fill exact */
+  background:var(--fill1);
+  border:1px solid var(--sep);
   border-radius:10px;padding:.88rem 1.1rem;
   font-size:.93rem;color:var(--gt1);
   font-family:inherit;outline:none;
   transition:border-color .2s,background .2s,box-shadow .2s;
   cursor:none;-webkit-appearance:none;
-  box-shadow:inset 0 1px 0 rgba(100,220,255,.15);
-  text-shadow:0 1px 2px rgba(0,0,0,.5);
+  box-shadow:inset 0 1px 0 rgba(235,235,245,.08);
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
 }
 .fg input:focus,.fg select:focus,.fg textarea:focus{
   border-color:rgba(202,255,0,.55);
-  background:rgba(202,255,0,.05);
-  box-shadow:inset 0 1px 0 rgba(202,255,0,.2),0 0 0 2px rgba(202,255,0,.10);
+  background:rgba(202,255,0,.06);
+  box-shadow:inset 0 1px 0 rgba(202,255,0,.18),0 0 0 2px rgba(202,255,0,.10);
 }
-.fg input::placeholder,.fg textarea::placeholder{color:rgba(255,255,255,.32)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--gt3)}
 .fg select option{background:#111;color:#fff}
 .fg textarea{resize:vertical;min-height:100px}
 
@@ -480,7 +487,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .footer-nav a{font-size:.8rem;color:var(--gt2);transition:color .2s}
 .footer-nav a:hover{color:var(--text)}
 .footer-socials{display:flex;flex-wrap:wrap;gap:.65rem}
-.footer-bot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.72rem;color:rgba(255,255,255,.2)}
+.footer-bot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.72rem;color:var(--gt4)}
 
 /* ─── RESPONSIVE ─────────────────────────────────────── */
 @media(max-width:1100px){
