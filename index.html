@@ -41,8 +41,25 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
   background-size:80px 80px;
 }
 
-/* ─── SHADER BG ──────────────────────────────────────── */
-#shaderBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* ─── AQUARIUM VIDEO BG ──────────────────────────────── */
+#aquaBg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  overflow:hidden;background:#010c14;
+}
+#aquaBg iframe{
+  position:absolute;
+  /* always cover the viewport regardless of aspect ratio */
+  width:177.78vh;height:56.25vw;
+  min-width:100%;min-height:100%;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  border:none;
+}
+/* dark teal overlay so text stays readable over the video */
+#aquaOverlay{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:rgba(0,8,20,.50);
+}
 
 /* ─── PROGRESS ───────────────────────────────────────── */
 .progress-bar{position:fixed;top:0;left:0;right:0;height:1.5px;background:var(--accent);transform:scaleX(0);transform-origin:left;z-index:10002;will-change:transform}
@@ -82,7 +99,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 
 /* ─── LAYOUT ─────────────────────────────────────────── */
 .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
-.section{padding:clamp(80px,10vw,150px) 0;background:rgba(1,10,20,.82)}
+.section{padding:clamp(80px,10vw,150px) 0;background:rgba(0,8,20,.72)}
 .section-label{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
 .section-label::before{content:'';display:block;width:1.8rem;height:1px;background:var(--accent)}
 .section-title{font-family:'Clash Display',sans-serif;font-size:clamp(36px,5.2vw,88px);font-weight:700;line-height:1.0;letter-spacing:-.035em;margin-bottom:3rem}
@@ -162,7 +179,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .scroll-lbl{font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl}
 
 /* ─── MARQUEE ────────────────────────────────────────── */
-.marquee-section{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.3rem 0;background:rgba(1,8,18,.88)}
+.marquee-section{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.3rem 0;background:rgba(0,8,20,.78)}
 .mq-row{display:flex;overflow:hidden;padding:.2rem 0}
 .mq-inner{display:flex;align-items:center;gap:2rem;white-space:nowrap;flex-shrink:0;padding-right:2rem}
 .mq-inner.fwd{animation:mq 28s linear infinite}
@@ -172,7 +189,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* ─── EDITORIAL ──────────────────────────────────────── */
-.editorial{padding:clamp(80px,12vw,180px) 0;border-bottom:1px solid var(--border);background:rgba(1,10,20,.82)}
+.editorial{padding:clamp(80px,12vw,180px) 0;border-bottom:1px solid var(--border);background:rgba(0,8,20,.72)}
 .editorial-stmt{
   font-family:'Clash Display',sans-serif;
   font-size:clamp(26px,4.2vw,74px);
@@ -239,7 +256,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .testi-role{font-size:.74rem;color:var(--muted);margin-top:.1rem}
 
 /* ─── TALK ───────────────────────────────────────────── */
-.talk-section{padding:clamp(80px,12vw,180px) 0;border-top:1px solid var(--border);overflow:hidden;background:rgba(1,10,20,.82)}
+.talk-section{padding:clamp(80px,12vw,180px) 0;border-top:1px solid var(--border);overflow:hidden;background:rgba(0,8,20,.72)}
 .talk-lbl{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
 .talk-lbl::before{content:'';display:block;width:1.8rem;height:1px;background:var(--accent)}
 .talk-email{
@@ -325,7 +342,16 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 </head>
 <body>
 
-<canvas id="shaderBg"></canvas>
+<!-- REAL aquarium video background -->
+<div id="aquaBg">
+  <iframe
+    src="https://www.youtube.com/embed/ASpYq_Y0csM?autoplay=1&mute=1&loop=1&playlist=ASpYq_Y0csM&controls=0&showinfo=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&enablejsapi=0"
+    frameborder="0"
+    allow="autoplay; encrypted-media"
+    title="Aquarium background">
+  </iframe>
+</div>
+<div id="aquaOverlay"></div>
 <div class="grid-overlay"></div>
 <div class="progress-bar" id="progressBar"></div>
 <div class="grain"></div>
@@ -775,7 +801,6 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
    INIT
 ═══════════════════════════════════════════════════════ */
 function initSite(){
-  initShaderBg();
   initHeroMesh();
   initWorkCanvases();
   initLenis();
@@ -790,9 +815,10 @@ function initSite(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   AQUARIUM BACKGROUND
+   AQUARIUM BACKGROUND — now a real YouTube video (see HTML)
+   keeping this stub so initSite() doesn't need patching
 ═══════════════════════════════════════════════════════ */
-function initShaderBg(){
+function initShaderBg_UNUSED(){
   const canvas=document.getElementById('shaderBg');
   const ctx=canvas.getContext('2d');
   let W=0,H=0;
