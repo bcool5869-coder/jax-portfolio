@@ -473,10 +473,11 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 <!-- REAL aquarium video background -->
 <div id="aquaBg">
   <iframe
-    src="https://www.youtube.com/embed/ASpYq_Y0csM?autoplay=1&mute=1&loop=1&playlist=ASpYq_Y0csM&controls=0&showinfo=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&enablejsapi=0"
+    src="https://www.youtube.com/embed/ASpYq_Y0csM?autoplay=1&mute=1&loop=1&playlist=ASpYq_Y0csM&controls=0&showinfo=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&enablejsapi=0&cc_load_policy=0"
     frameborder="0"
     allow="autoplay; encrypted-media"
-    title="Aquarium background">
+    title="Aquarium background"
+    style="pointer-events:none;user-select:none;">
   </iframe>
 </div>
 <div id="aquaOverlay"></div>
@@ -1301,14 +1302,19 @@ function initHeroMesh(){
       varying vec3 vPos;
       void main(){
         vec3 lime=vec3(0.792,1.0,0.0);
-        vec3 dark=vec3(0.03,0.03,0.03);
-        float t=clamp(vElevation*2.8+.55,0.,1.);
-        vec3 col=mix(dark,lime*.55,t);
-        float fresnel=pow(1.-max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.),2.5);
-        col+=lime*fresnel*.24;
-        float glow=smoothstep(.3,.0,length(vPos.xy)-.8);
-        col+=lime*.06*glow;
-        gl_FragColor=vec4(col,.86);
+        /* Very dark base — almost black-green, barely visible in center */
+        vec3 base=vec3(0.008,0.028,0.012);
+        float t=clamp(vElevation*1.6+.4,0.,1.);
+        /* Base color: nearly invisible in center, slightly brighter at peaks */
+        vec3 col=mix(base,base*2.4,t);
+        /* Fresnel rim: lime ONLY at silhouette edges — the signature look */
+        float fresnel=pow(1.-max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.),1.6);
+        col+=lime*fresnel*.72;
+        /* Very subtle interior lime shimmer at displaced peaks */
+        col+=lime*.035*t;
+        /* Alpha: mostly transparent in center, solid lime glow at rim */
+        float alpha=mix(0.18,0.82,fresnel)+t*0.07;
+        gl_FragColor=vec4(col,clamp(alpha,0.,1.));
       }
     `,
     transparent:true,
@@ -1319,9 +1325,9 @@ function initHeroMesh(){
   const sphere=new THREE.Mesh(sphereGeo,morphMat);
   scene.add(sphere);
 
-  /* Wireframe overlay */
-  const wireMat=new THREE.MeshBasicMaterial({color:0xCAFF00,wireframe:true,transparent:true,opacity:.05});
-  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(2.02,8),wireMat);
+  /* Wireframe overlay — very faint, just suggests structure */
+  const wireMat=new THREE.MeshBasicMaterial({color:0xCAFF00,wireframe:true,transparent:true,opacity:.022});
+  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(2.02,10),wireMat);
   scene.add(wire);
 
   /* Orbital ring */
