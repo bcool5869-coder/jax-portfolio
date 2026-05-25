@@ -14,10 +14,16 @@
 <style>
 /* ─── VARIABLES ─────────────────────────────────────── */
 :root{
-  --bg:#010c14;--bg2:#010e18;--text:#f0f0f0;--muted:#556070;
-  --accent:#CAFF00;--border:rgba(255,255,255,.06);
+  --bg:#010c14;--bg2:#010e18;--text:#f0f0f0;
+  /* Muted: white-based so it reads on BOTH dark sections AND glass surfaces */
+  --muted:rgba(255,255,255,.50);
+  --accent:#CAFF00;--border:rgba(255,255,255,.07);
   --card:rgba(0,20,35,.55);
   --max:1400px;--pad:clamp(24px,5.5vw,90px);
+  /* Glass text hierarchy (Apple Liquid Glass uses white opacity tiers) */
+  --gt1:#ffffff;               /* primary on glass   */
+  --gt2:rgba(255,255,255,.75); /* secondary on glass */
+  --gt3:rgba(255,255,255,.48); /* tertiary / labels  */
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px;scroll-behavior:auto}
@@ -81,16 +87,16 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 /* ─── NAV ────────────────────────────────────────────── */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.5rem var(--pad);transition:background .4s,backdrop-filter .4s}
 .nav.scrolled{
-  background:rgba(255,255,255,.06);
-  backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
-  border-bottom:1px solid rgba(255,255,255,.12);
-  box-shadow:inset 0 -1px 0 rgba(255,255,255,.08),0 8px 32px rgba(0,0,0,.3);
+  background:rgba(255,255,255,.11);
+  backdrop-filter:blur(44px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter:blur(44px) saturate(200%) brightness(1.08);
+  border-bottom:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.18),0 8px 32px rgba(0,0,0,.32);
 }
 .nav-logo{font-family:'Clash Display',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.04em}
 .accent-dot{color:var(--accent)}
 .nav-links{display:flex;gap:2.5rem}
-.nav-links a{font-size:.83rem;font-weight:500;color:var(--muted);letter-spacing:.03em;transition:color .2s}
+.nav-links a{font-size:.83rem;font-weight:500;color:var(--gt2);letter-spacing:.03em;transition:color .2s}
 .nav-links a:hover{color:var(--text)}
 .nav-cta{display:inline-block;font-size:.83rem;font-weight:700;color:var(--bg);background:var(--accent);padding:.58rem 1.4rem;border-radius:100px;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s}
 .nav-cta:hover{transform:scale(1.06) translateY(-2px);box-shadow:0 8px 28px rgba(202,255,0,.28)}
@@ -107,35 +113,39 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
    APPLE LIQUID GLASS SYSTEM
 ═══════════════════════════════════════════════════════ */
 .glass{
-  background:rgba(255,255,255,.07);
-  backdrop-filter:blur(32px) saturate(180%) brightness(1.06);
-  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.06);
-  border:1px solid rgba(255,255,255,.15);
+  /* Apple Liquid Glass: frosted white tint, strong blur, adaptive */
+  background:rgba(255,255,255,.13);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
+  border:1px solid rgba(255,255,255,.26);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,.28),   /* top highlight */
-    inset 0 -1px 0 rgba(0,0,0,.18),           /* bottom shadow */
-    inset 0 0 0 .5px rgba(255,255,255,.06),   /* inner edge glow */
-    0 8px 32px rgba(0,0,0,.38),
-    0 2px 8px rgba(0,0,0,.22);
+    inset 0 1.5px 0 rgba(255,255,255,.55),   /* top edge catch-light */
+    inset 0 -1px 0 rgba(0,0,0,.20),           /* bottom inner shadow */
+    inset 1px 0 0 rgba(255,255,255,.10),      /* left edge glow */
+    inset -1px 0 0 rgba(255,255,255,.06),     /* right edge glow */
+    0 8px 32px rgba(0,0,0,.42),
+    0 2px 8px rgba(0,0,0,.24);
   position:relative;overflow:hidden;
+  /* Vibrancy: text inside glass must pop off the surface */
+  color:var(--gt1);
 }
 /* Specular sheen — follows cursor via --mx/--my custom props */
 .glass::before{
   content:'';position:absolute;inset:0;
   background:radial-gradient(
-    ellipse 80% 60% at var(--mx,50%) var(--my,30%),
-    rgba(255,255,255,.13) 0%,
-    rgba(255,255,255,.05) 45%,
-    transparent 75%
+    ellipse 80% 55% at var(--mx,50%) var(--my,28%),
+    rgba(255,255,255,.18) 0%,
+    rgba(255,255,255,.06) 50%,
+    transparent 78%
   );
   pointer-events:none;z-index:0;
-  transition:opacity .4s;
+  transition:background .25s ease;
 }
 /* Top edge catch-light strip */
 .glass::after{
   content:'';position:absolute;
-  top:0;left:12%;right:12%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  top:0;left:8%;right:8%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7) 40%,rgba(255,255,255,.7) 60%,transparent);
   pointer-events:none;
 }
 /* Make sure children sit above the sheen */
@@ -211,7 +221,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
   font-family:'Clash Display',sans-serif;
   font-size:clamp(14px,1.6vw,22px);font-weight:600;
   letter-spacing:.12em;text-transform:uppercase;
-  color:var(--muted);margin-top:1.6rem;margin-bottom:2rem;
+  color:var(--gt2);margin-top:1.6rem;margin-bottom:2rem;
   animation:fadeUp .7s 1.4s both;
 }
 .hero-actions{display:flex;align-items:center;gap:1rem;animation:fadeUp .7s 1.7s both;flex-wrap:wrap}
@@ -226,7 +236,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .scroll-track{width:1px;height:52px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
 .scroll-fill{position:absolute;top:-100%;left:0;width:100%;height:100%;background:var(--accent);animation:scrollDown 1.8s ease-in-out infinite}
 @keyframes scrollDown{0%{top:-100%}100%{top:100%}}
-.scroll-lbl{font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl}
+.scroll-lbl{font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gt3);writing-mode:vertical-rl}
 
 /* ─── MARQUEE ────────────────────────────────────────── */
 .marquee-section{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.3rem 0;background:rgba(0,8,20,.78)}
@@ -234,7 +244,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .mq-inner{display:flex;align-items:center;gap:2rem;white-space:nowrap;flex-shrink:0;padding-right:2rem}
 .mq-inner.fwd{animation:mq 28s linear infinite}
 .mq-inner.rev{animation:mq 26s linear infinite reverse}
-.mq-inner span{font-family:'Clash Display',sans-serif;font-size:clamp(.82rem,1.1vw,.98rem);font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.mq-inner span{font-family:'Clash Display',sans-serif;font-size:clamp(.82rem,1.1vw,.98rem);font-weight:600;color:var(--gt2);letter-spacing:.05em;text-transform:uppercase}
 .mq-inner .sep{color:rgba(202,255,0,.5);font-size:.8rem}
 @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
@@ -248,11 +258,11 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 }
 .editorial-stmt em{font-style:normal;color:var(--accent)}
 .editorial-row{display:flex;align-items:flex-end;justify-content:space-between;gap:4rem;flex-wrap:wrap}
-.editorial-desc{max-width:460px;font-size:clamp(.9rem,1.15vw,1.02rem);color:var(--muted);line-height:1.74}
+.editorial-desc{max-width:460px;font-size:clamp(.9rem,1.15vw,1.02rem);color:var(--gt2);line-height:1.74}
 .stats-strip{display:flex;gap:clamp(2.5rem,4vw,5rem);flex-wrap:wrap}
 .stat-unit .stat-n{font-family:'Clash Display',sans-serif;font-size:clamp(2.8rem,5vw,5.5rem);font-weight:700;color:var(--accent);letter-spacing:-.055em;line-height:1;display:flex;align-items:baseline;gap:.15rem}
 .stat-suf{font-size:clamp(2rem,3.5vw,4rem)}
-.stat-l{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:.4rem}
+.stat-l{font-size:.68rem;font-weight:700;color:var(--gt3);letter-spacing:.18em;text-transform:uppercase;margin-top:.4rem}
 
 /* ─── WORK ───────────────────────────────────────────── */
 .work-header{margin-bottom:0;padding-bottom:3rem}
@@ -268,26 +278,31 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .work-row:hover .work-sheen{opacity:1}
 .work-info{
   padding:clamp(40px,5vw,78px);display:flex;flex-direction:column;justify-content:center;
-  border-left:1px solid rgba(255,255,255,.08);position:relative;transition:background .3s;
-  background:rgba(255,255,255,.04);
-  backdrop-filter:blur(24px) saturate(160%);
-  -webkit-backdrop-filter:blur(24px) saturate(160%);
+  border-left:1px solid rgba(255,255,255,.14);position:relative;transition:background .3s;
+  background:rgba(255,255,255,.09);
+  backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
 }
 .work-row:nth-child(even) .work-info{border-left:none;border-right:1px solid rgba(255,255,255,.08)}
 .work-row:hover .work-info{background:rgba(255,255,255,.07)}
 .work-idx{font-size:.66rem;font-weight:700;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.9rem}
-.work-info h3{font-family:'Clash Display',sans-serif;font-size:clamp(1.65rem,2.8vw,2.75rem);font-weight:700;letter-spacing:-.03em;margin-bottom:.8rem;line-height:1.05}
-.work-info p{font-size:.92rem;color:var(--muted);line-height:1.68;margin-bottom:2rem;max-width:370px}
+.work-info h3{font-family:'Clash Display',sans-serif;font-size:clamp(1.65rem,2.8vw,2.75rem);font-weight:700;letter-spacing:-.03em;margin-bottom:.8rem;line-height:1.05;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.work-info p{font-size:.92rem;color:var(--gt2);line-height:1.68;margin-bottom:2rem;max-width:370px;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 .work-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:2rem}
-.chip{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border);color:var(--muted);padding:.26rem .7rem;border-radius:100px;transition:border-color .25s,color .25s}
-.work-row:hover .chip{border-color:rgba(202,255,0,.2);color:rgba(202,255,0,.65)}
+.chip{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:var(--gt3);padding:.26rem .7rem;border-radius:100px;transition:border-color .25s,color .25s}
+.work-row:hover .chip{border-color:rgba(202,255,0,.28);color:rgba(202,255,0,.75)}
 .work-arrow{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(202,255,0,.06);border:1px solid rgba(202,255,0,.18);border-radius:50%;color:var(--accent);font-size:1.15rem;transition:background .22s,transform .32s cubic-bezier(.34,1.56,.64,1),color .22s;align-self:flex-start}
 .work-row:hover .work-arrow{background:var(--accent);color:var(--bg);transform:rotate(45deg)}
 
 /* ─── SERVICES ───────────────────────────────────────── */
 .svc-list{border-top:1px solid var(--border);margin-top:0}
 .svc-item{border-bottom:1px solid rgba(255,255,255,.08);transition:background .3s}
-.svc-item.open{background:rgba(255,255,255,.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.svc-item.open{
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(28px) saturate(180%) brightness(1.06);
+  -webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.06);
+  border-bottom:1px solid rgba(255,255,255,.18);
+}
 .svc-head{display:flex;align-items:center;justify-content:space-between;padding:2rem 0;cursor:pointer;user-select:none;transition:color .2s}
 .svc-head:hover{color:var(--accent)}
 .svc-lhs{display:flex;align-items:center;gap:2.5rem}
@@ -299,32 +314,39 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .svc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.22,1,.36,1)}
 .svc-item.open .svc-body{grid-template-rows:1fr}
 .svc-body-inner{overflow:hidden}
-.svc-desc{padding:0 0 2.2rem;max-width:640px;font-size:clamp(.9rem,1.15vw,.98rem);color:var(--muted);line-height:1.74;padding-left:calc(2.5rem + clamp(1.1rem,2.2vw,1.9rem))}
+.svc-desc{padding:0 0 2.2rem;max-width:640px;font-size:clamp(.9rem,1.15vw,.98rem);color:var(--gt2);line-height:1.74;padding-left:calc(2.5rem + clamp(1.1rem,2.2vw,1.9rem))}
 
 /* ─── TESTIMONIALS ───────────────────────────────────── */
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
 .testi-card{
   border-radius:22px;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem;
   transition:transform .38s cubic-bezier(.34,1.56,.64,1),box-shadow .38s;
-  background:rgba(255,255,255,.07);
-  backdrop-filter:blur(28px) saturate(170%) brightness(1.04);
-  -webkit-backdrop-filter:blur(28px) saturate(170%) brightness(1.04);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.26),inset 0 -1px 0 rgba(0,0,0,.15),0 8px 32px rgba(0,0,0,.35);
+  /* Apple Liquid Glass: visible frosted surface */
+  background:rgba(255,255,255,.13);
+  backdrop-filter:blur(36px) saturate(190%) brightness(1.07);
+  -webkit-backdrop-filter:blur(36px) saturate(190%) brightness(1.07);
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.52),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 8px 32px rgba(0,0,0,.38);
   position:relative;overflow:hidden;
+  color:var(--gt1);
 }
 .testi-card::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at var(--mx,50%) var(--my,30%),rgba(255,255,255,.11) 0%,transparent 70%);
-  pointer-events:none;
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(255,255,255,.16) 0%,transparent 70%);
+  pointer-events:none;z-index:0;transition:background .25s ease;
 }
-.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 20px 60px rgba(0,0,0,.45)}
-.testi-stars{color:var(--accent);font-size:.9rem;letter-spacing:.12em}
-.testi-card p{font-size:.88rem;color:var(--muted);line-height:1.75;flex:1;font-style:italic}
+.testi-card>*{position:relative;z-index:1}
+.testi-card:hover{transform:translateY(-7px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 24px 64px rgba(0,0,0,.48)}
+.testi-stars{color:var(--accent);font-size:.9rem;letter-spacing:.12em;text-shadow:0 0 12px rgba(202,255,0,.4)}
+/* Quote text: Apple glass vibrancy — white with slight shadow for depth */
+.testi-card p{font-size:.88rem;color:var(--gt2);line-height:1.75;flex:1;font-style:italic;text-shadow:0 1px 3px rgba(0,0,0,.55)}
 .testi-author{display:flex;align-items:center;gap:1rem}
 .testi-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700}
-.testi-name{font-weight:600;font-size:.87rem}
-.testi-role{font-size:.74rem;color:var(--muted);margin-top:.1rem}
+.testi-name{font-weight:600;font-size:.87rem;color:var(--gt1);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.testi-role{font-size:.74rem;color:var(--gt3);margin-top:.1rem}
 
 /* ─── TALK ───────────────────────────────────────────── */
 .talk-section{padding:clamp(80px,12vw,180px) 0;border-top:1px solid var(--border);overflow:hidden;background:rgba(0,8,20,.72)}
@@ -339,7 +361,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .talk-email::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:1.5px;background:var(--accent);transition:width .45s cubic-bezier(.22,1,.36,1)}
 .talk-email:hover{color:var(--accent)}
 .talk-email:hover::after{width:100%}
-.talk-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}
+.talk-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-size:.86rem;color:var(--gt2)}
 .talk-sep{opacity:.25}
 .talk-avail{display:inline-flex;align-items:center;gap:.5rem;color:#4ade80;font-weight:600}
 .talk-avail::before{content:'';width:6px;height:6px;background:#4ade80;border-radius:50%;animation:blink 2s ease-in-out infinite}
@@ -347,32 +369,54 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 /* ─── CONTACT ────────────────────────────────────────── */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,110px);align-items:start}
 .contact-info{display:flex;flex-direction:column;gap:1.75rem;margin-bottom:2.5rem}
-.ci-lbl{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.ci-lbl{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gt3);margin-bottom:.35rem}
 .ci-val{font-size:.97rem;font-weight:500;color:var(--accent);transition:opacity .2s}
 .ci-val:hover{opacity:.7}
 .social-row{display:flex;flex-wrap:wrap;gap:.65rem}
-.soc-link{font-size:.78rem;font-weight:600;color:var(--muted);border:1px solid var(--border);padding:.44rem 1rem;border-radius:100px;transition:color .2s,border-color .2s,transform .2s}
-.soc-link:hover{color:var(--accent);border-color:rgba(202,255,0,.3);transform:translateY(-2px)}
+.soc-link{font-size:.78rem;font-weight:600;color:var(--gt2);border:1px solid rgba(255,255,255,.16);padding:.44rem 1rem;border-radius:100px;transition:color .2s,border-color .2s,background .2s,transform .2s;background:rgba(255,255,255,.05)}
+.soc-link:hover{color:var(--accent);border-color:rgba(202,255,0,.35);background:rgba(202,255,0,.06);transform:translateY(-2px)}
 .contact-form{
   border-radius:22px;padding:clamp(24px,3.5vw,44px);display:flex;flex-direction:column;gap:1.2rem;
-  background:rgba(255,255,255,.065);
-  backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
-  -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(1.05);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.12),0 12px 40px rgba(0,0,0,.38);
+  /* Apple Liquid Glass */
+  background:rgba(255,255,255,.13);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.08);
+  border:1px solid rgba(255,255,255,.26);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.55),
+    inset 0 -1px 0 rgba(0,0,0,.20),
+    0 12px 48px rgba(0,0,0,.42);
   position:relative;overflow:hidden;
+  color:var(--gt1);
 }
 .contact-form::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at var(--mx,50%) var(--my,30%),rgba(255,255,255,.1) 0%,transparent 70%);
-  pointer-events:none;
+  background:radial-gradient(ellipse 80% 55% at var(--mx,50%) var(--my,28%),rgba(255,255,255,.18) 0%,transparent 72%);
+  pointer-events:none;z-index:0;transition:background .25s ease;
 }
+.contact-form>*{position:relative;z-index:1}
 .fg{display:flex;flex-direction:column;gap:.44rem}
-.fg label{font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
-.fg input,.fg select,.fg textarea{background:rgba(255,255,255,.034);border:1px solid var(--border);border-radius:10px;padding:.88rem 1.1rem;font-size:.93rem;color:var(--text);font-family:inherit;outline:none;transition:border-color .2s,background .2s;cursor:none;-webkit-appearance:none}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(202,255,0,.38);background:rgba(202,255,0,.018)}
-.fg input::placeholder,.fg textarea::placeholder{color:rgba(255,255,255,.18)}
-.fg select option{background:#111}
+/* Labels on glass: white at 55% opacity — crisp, readable */
+.fg label{font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gt3)}
+/* Inputs: glass-on-glass treatment — slightly lighter tint */
+.fg input,.fg select,.fg textarea{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.20);
+  border-radius:10px;padding:.88rem 1.1rem;
+  font-size:.93rem;color:var(--gt1);
+  font-family:inherit;outline:none;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+  cursor:none;-webkit-appearance:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{
+  border-color:rgba(202,255,0,.55);
+  background:rgba(202,255,0,.06);
+  box-shadow:inset 0 1px 0 rgba(202,255,0,.2),0 0 0 2px rgba(202,255,0,.12);
+}
+.fg input::placeholder,.fg textarea::placeholder{color:rgba(255,255,255,.32)}
+.fg select option{background:#111;color:#fff}
 .fg textarea{resize:vertical;min-height:100px}
 
 /* ─── BUTTONS ────────────────────────────────────────── */
@@ -389,7 +433,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 .footer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1.5rem}
 .footer-logo{font-family:'Clash Display',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.04em}
 .footer-nav{display:flex;gap:2rem;flex-wrap:wrap}
-.footer-nav a{font-size:.8rem;color:var(--muted);transition:color .2s}
+.footer-nav a{font-size:.8rem;color:var(--gt2);transition:color .2s}
 .footer-nav a:hover{color:var(--text)}
 .footer-socials{display:flex;flex-wrap:wrap;gap:.65rem}
 .footer-bot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.72rem;color:rgba(255,255,255,.2)}
