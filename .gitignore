@@ -1,0 +1,35 @@
+# Environment & secrets — NEVER commit these
+.env
+.env.*
+*.env
+*.secret
+secrets.*
+credentials.*
+config.local.*
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node (if ever added)
+node_modules/
+dist/
+.cache/
+
+# Python (gen_canvas.py etc)
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
