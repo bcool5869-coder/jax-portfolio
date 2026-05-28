@@ -62,25 +62,17 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
   background-size:80px 80px;
 }
 
-/* ─── AQUARIUM VIDEO BG ──────────────────────────────── */
-#aquaBg{
+/* ─── CUSTOM WebGL WATER BACKGROUND ─────────────────── */
+#waterBg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
-  overflow:hidden;background:#010c14;
+  width:100%;height:100%;display:block;
 }
-#aquaBg iframe{
-  position:absolute;
-  /* always cover the viewport regardless of aspect ratio */
-  width:177.78vh;height:56.25vw;
-  min-width:100%;min-height:100%;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  border:none;
-}
-/* dark teal overlay so text stays readable over the video */
-#aquaOverlay{
+/* Subtle dark vignette over the water for text readability */
+#waterVignette{
   position:fixed;inset:0;z-index:1;pointer-events:none;
-  /* Lighter overlay — aquarium vivid and immersive */
-  background:rgba(0,6,18,.28);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 50%,transparent 40%,rgba(0,4,16,.55) 100%),
+    linear-gradient(to bottom,rgba(0,4,16,.22) 0%,transparent 20%,transparent 80%,rgba(0,4,16,.38) 100%);
 }
 
 /* ─── PROGRESS ───────────────────────────────────────── */
@@ -521,17 +513,9 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
 </head>
 <body>
 
-<!-- REAL aquarium video background -->
-<div id="aquaBg">
-  <iframe
-    src="https://www.youtube.com/embed/ASpYq_Y0csM?autoplay=1&mute=1&loop=1&playlist=ASpYq_Y0csM&controls=0&showinfo=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&enablejsapi=0&cc_load_policy=0"
-    frameborder="0"
-    allow="autoplay; encrypted-media"
-    title="Aquarium background"
-    style="pointer-events:none;user-select:none;">
-  </iframe>
-</div>
-<div id="aquaOverlay"></div>
+<!-- Custom WebGL caustic water background — no YouTube UI, fully ours -->
+<canvas id="waterBg"></canvas>
+<div id="waterVignette"></div>
 <div class="grid-overlay"></div>
 <div class="progress-bar" id="progressBar"></div>
 <div class="grain"></div>
@@ -981,6 +965,7 @@ button{cursor:none;border:none;background:none;font:inherit;color:inherit}
    INIT
 ═══════════════════════════════════════════════════════ */
 function initSite(){
+  initWaterBg();
   initHeroMesh();
   initWorkCanvases();
   initLenis();
@@ -988,11 +973,206 @@ function initSite(){
   initCursor();
   initProgress();
   initReveal();
+  initScrollAnimations();
   initMagnetic();
   initCountUp();
   initHeroName();
   initAccordion();
   initGlassEffect();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOM WebGL CAUSTIC WATER BACKGROUND
+   — Replaces YouTube iframe. No player UI. Fully ours.
+═══════════════════════════════════════════════════════ */
+function initWaterBg(){
+  if(typeof THREE==='undefined')return;
+  const canvas=document.getElementById('waterBg');
+  if(!canvas)return;
+
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.setSize(innerWidth,innerHeight);
+
+  const scene=new THREE.Scene();
+  const cam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+
+  const uTime={value:0};
+  const uRes={value:new THREE.Vector2(innerWidth,innerHeight)};
+  const uMouse={value:new THREE.Vector2(0.5,0.5)};
+
+  const mat=new THREE.ShaderMaterial({
+    uniforms:{time:uTime,res:uRes,mouse:uMouse},
+    vertexShader:`void main(){gl_Position=vec4(position,1.0);}`,
+    fragmentShader:`
+      uniform float time;
+      uniform vec2 res;
+      uniform vec2 mouse;
+
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.545);}
+
+      float noise(vec2 p){
+        vec2 i=floor(p),f=fract(p);
+        f=f*f*(3.0-2.0*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),
+                   mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
+      }
+
+      /* Layered caustic pattern */
+      float caustic(vec2 uv,float t){
+        float c=0.0;
+        mat2 rot=mat2(0.866,-0.5,0.5,0.866);
+        for(int i=0;i<7;i++){
+          float fi=float(i);
+          uv=rot*uv;
+          float n=noise(uv*(1.4+fi*0.38)+vec2(t*0.20,t*0.15+fi*0.8));
+          c+=sin(n*6.28318+t*0.45+fi*0.9)*0.5+0.5;
+        }
+        return pow(c/7.0,2.8);
+      }
+
+      void main(){
+        vec2 uv=gl_FragCoord.xy/res;
+        float ar=res.x/res.y;
+        vec2 p=uv*vec2(ar,1.0);
+        vec2 m=mouse*vec2(ar,1.0);
+
+        /* Subtle mouse ripple */
+        float d=length(p-m);
+        float ripple=sin(d*22.0-time*2.8)*exp(-d*4.5)*0.018;
+
+        /* Deep ocean colour gradient — dark navy → midnight */
+        vec3 deepNavy  =vec3(0.004,0.012,0.042);
+        vec3 midOcean  =vec3(0.009,0.042,0.110);
+        vec3 shallowTeal=vec3(0.016,0.095,0.210);
+
+        float depth=smoothstep(0.0,1.0,uv.y);
+        vec3 bg=mix(shallowTeal,mix(midOcean,deepNavy,depth*0.7),depth*0.6);
+
+        /* Caustic shimmer layers */
+        float c1=caustic(p*1.6+ripple,time*0.38);
+        float c2=caustic(p*2.6-vec2(time*0.14,0.0),time*0.28+2.1);
+        float cVal=c1*0.58+c2*0.42;
+
+        vec3 causticTint=mix(
+          vec3(0.04,0.28,0.60),   /* deep teal caustic  */
+          vec3(0.50,0.84,1.00),   /* white-blue shimmer  */
+          cVal
+        );
+        bg+=causticTint*cVal*0.16;
+
+        /* God rays from surface top */
+        float rayX=uv.x+sin(uv.x*5.0+time*0.10)*0.06+mouse.x*0.04;
+        float ray=abs(sin(rayX*14.0+time*0.06));
+        ray=pow(ray,9.0)*pow(max(1.0-uv.y,0.0),1.8);
+        bg+=vec3(0.02,0.14,0.40)*ray*0.18;
+
+        /* Slight vignette baked in */
+        float vig=1.0-smoothstep(0.32,1.2,length(uv-0.5)*1.5);
+        bg*=vig*0.28+0.72;
+
+        gl_FragColor=vec4(bg,1.0);
+      }
+    `,
+  });
+
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2,2),mat);
+  scene.add(mesh);
+
+  document.addEventListener('mousemove',e=>{
+    uMouse.value.set(e.clientX/innerWidth,1.0-e.clientY/innerHeight);
+  });
+  window.addEventListener('resize',()=>{
+    renderer.setSize(innerWidth,innerHeight);
+    uRes.value.set(innerWidth,innerHeight);
+  });
+
+  let t=0;
+  (function frame(){requestAnimationFrame(frame);t+=0.004;uTime.value=t;renderer.render(scene,cam);})();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CINEMATIC SCROLL ANIMATIONS — clip-path reveals,
+   parallax, staggered word entrances
+═══════════════════════════════════════════════════════ */
+function initScrollAnimations(){
+  if(typeof gsap==='undefined'||typeof ScrollTrigger==='undefined')return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ── Section titles: horizontal clip-path wipe ── */
+  document.querySelectorAll('.section-title,.editorial-stmt').forEach(el=>{
+    gsap.from(el,{
+      clipPath:'inset(0 100% 0 0)',
+      opacity:0,
+      duration:1.4,
+      ease:'expo.out',
+      scrollTrigger:{trigger:el,start:'top 88%',once:true}
+    });
+  });
+
+  /* ── Section labels: slide + fade ── */
+  document.querySelectorAll('.section-label,.talk-lbl').forEach(el=>{
+    gsap.from(el,{
+      xPercent:-18,opacity:0,duration:1.0,ease:'expo.out',
+      scrollTrigger:{trigger:el,start:'top 90%',once:true}
+    });
+  });
+
+  /* ── Stat units: staggered pop-up ── */
+  const statsParent=document.querySelector('.stats-strip');
+  if(statsParent){
+    gsap.from(statsParent.querySelectorAll('.stat-unit'),{
+      yPercent:50,opacity:0,duration:1.0,ease:'expo.out',stagger:0.14,
+      scrollTrigger:{trigger:statsParent,start:'top 85%',once:true}
+    });
+  }
+
+  /* ── Work rows: alternate slide in from sides ── */
+  document.querySelectorAll('.work-row').forEach((row,i)=>{
+    gsap.from(row,{
+      xPercent:i%2===0?-5:5,opacity:0,duration:1.2,ease:'expo.out',
+      scrollTrigger:{trigger:row,start:'top 88%',once:true}
+    });
+  });
+
+  /* ── Testi cards: staggered rise ── */
+  const testiGrid=document.querySelector('.testi-grid');
+  if(testiGrid){
+    gsap.from(testiGrid.querySelectorAll('.testi-card'),{
+      yPercent:30,opacity:0,duration:1.1,ease:'expo.out',stagger:0.12,
+      scrollTrigger:{trigger:testiGrid,start:'top 85%',once:true}
+    });
+  }
+
+  /* ── Service items: staggered ── */
+  gsap.from('.svc-item',{
+    xPercent:-3,opacity:0,duration:0.9,ease:'expo.out',stagger:0.08,
+    scrollTrigger:{trigger:'.svc-list',start:'top 85%',once:true}
+  });
+
+  /* ── Contact form: scale in ── */
+  const form=document.querySelector('.contact-form');
+  if(form){
+    gsap.from(form,{
+      scale:0.96,opacity:0,duration:1.2,ease:'expo.out',
+      scrollTrigger:{trigger:form,start:'top 85%',once:true}
+    });
+  }
+
+  /* ── Hero sub-elements: staggered after name loads ── */
+  gsap.from(['.hero-sub','.hero-actions','.hero-scroll'],{
+    yPercent:20,opacity:0,duration:1.1,ease:'expo.out',stagger:0.18,delay:1.8
+  });
+
+  /* ── Big email link: clip-path wipe ── */
+  const email=document.querySelector('.talk-email');
+  if(email){
+    gsap.from(email,{
+      clipPath:'inset(0 100% 0 0)',
+      duration:1.6,ease:'expo.out',
+      scrollTrigger:{trigger:email,start:'top 88%',once:true}
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1352,35 +1532,36 @@ function initHeroMesh(){
       varying vec3 vNormal;
       varying vec3 vPos;
       void main(){
-        /* Water/Liquid Glass orb — matches aquarium background */
-        vec3 oceanDeep   = vec3(0.01,0.08,0.20);   /* deep ocean blue   */
-        vec3 oceanMid    = vec3(0.04,0.22,0.40);   /* mid-water teal    */
-        vec3 caustic     = vec3(0.10,0.68,0.88);   /* bright caustic    */
-        vec3 highlight   = vec3(0.78,0.97,1.00);   /* white water rim   */
-        vec3 lime        = vec3(0.792,1.0,0.0);    /* accent on edge    */
+        /* Dark chrome / liquid metal — premium, matches water bg */
+        vec3 dark      = vec3(0.012,0.016,0.022); /* near-black base   */
+        vec3 chrome    = vec3(0.68,0.75,0.80);    /* silver reflection  */
+        vec3 waterRefl = vec3(0.04,0.20,0.45);    /* water bg reflected */
+        vec3 lime      = vec3(0.792,1.0,0.0);     /* brand edge accent  */
+        vec3 coldWhite = vec3(0.82,0.94,1.00);    /* specular highlight  */
 
-        float elev=clamp(vElevation*2.2+.50,0.,1.);
+        float elev=clamp(vElevation*2.0+.5,0.,1.);
         float nDotV=max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.);
-        float fresnel=pow(1.-nDotV,2.8);           /* rim light         */
-        float sharpRim=pow(1.-nDotV,5.5);          /* thin edge accent  */
+        float fresnel=pow(1.-nDotV,2.2);
+        float sharpEdge=pow(1.-nDotV,5.5);
 
-        /* Interior: ocean colour varies with displacement */
-        vec3 col=mix(oceanDeep,oceanMid,elev);
+        /* Interior: very dark with subtle water reflection tint */
+        vec3 col=mix(dark,waterRefl*0.18,elev*0.4);
 
-        /* Caustic glow at rim — like light through water */
-        col+=caustic*fresnel*.55;
-        col+=highlight*fresnel*.30;
+        /* Chrome rim — like polished metal catching the water light */
+        col+=chrome*fresnel*0.38;
+        col+=waterRefl*fresnel*0.28;
 
-        /* Very thin lime edge — brand accent, barely visible */
-        col+=lime*sharpRim*.28;
+        /* Two tight specular hotspots — glass/metal quality */
+        float spec1=pow(nDotV,32.0);
+        float spec2=pow(max(dot(normalize(vNormal),normalize(vec3(0.4,0.7,0.6))),0.),20.0);
+        col+=coldWhite*spec1*0.90;
+        col+=coldWhite*spec2*0.35;
 
-        /* Specular hotspot — water droplet sparkle */
-        float spec=pow(nDotV,18.0);
-        col+=highlight*spec*.55;
+        /* Razor lime accent at extreme silhouette edge only */
+        col+=lime*sharpEdge*0.18;
 
-        /* Alpha: semi-transparent body (aquarium shows through)
-           opaque at the glowing rim */
-        float alpha=mix(0.45,0.90,fresnel)+elev*0.06;
+        /* Alpha: glass-dark center, chrome rim */
+        float alpha=mix(0.20,0.92,fresnel)+spec1*0.06;
         gl_FragColor=vec4(col,clamp(alpha,0.,1.));
       }
     `,
