@@ -1042,9 +1042,9 @@ function initWaterBg(){
         float ripple=sin(d*22.0-time*2.8)*exp(-d*4.5)*0.018;
 
         /* Deep ocean colour gradient — dark navy → midnight */
-        vec3 deepNavy  =vec3(0.004,0.012,0.042);
-        vec3 midOcean  =vec3(0.009,0.042,0.110);
-        vec3 shallowTeal=vec3(0.016,0.095,0.210);
+        vec3 deepNavy  =vec3(0.004,0.014,0.048);
+        vec3 midOcean  =vec3(0.010,0.050,0.130);
+        vec3 shallowTeal=vec3(0.020,0.110,0.240);
 
         float depth=smoothstep(0.0,1.0,uv.y);
         vec3 bg=mix(shallowTeal,mix(midOcean,deepNavy,depth*0.7),depth*0.6);
@@ -1055,11 +1055,11 @@ function initWaterBg(){
         float cVal=c1*0.58+c2*0.42;
 
         vec3 causticTint=mix(
-          vec3(0.04,0.28,0.60),   /* deep teal caustic  */
-          vec3(0.50,0.84,1.00),   /* white-blue shimmer  */
+          vec3(0.04,0.30,0.65),   /* deep teal caustic  */
+          vec3(0.55,0.88,1.00),   /* white-blue shimmer  */
           cVal
         );
-        bg+=causticTint*cVal*0.16;
+        bg+=causticTint*cVal*0.22;
 
         /* God rays from surface top */
         float rayX=uv.x+sin(uv.x*5.0+time*0.10)*0.06+mouse.x*0.04;
@@ -1520,8 +1520,8 @@ function initHeroMesh(){
         float n1=noise(position*2.2+vec3(time*.32,time*.28,time*.35));
         float n2=noise(position*4.4+vec3(time*.55,time*.42,time*.48));
         float n=n1*.6+n2*.3;
-        float mInfluence=sin(position.x*2.8+mouse.x*1.5)*cos(position.y*2.8+mouse.y*1.5)*.1;
-        float elev=(n-.5)*.55+mInfluence;
+        float mInfluence=sin(position.x*2.8+mouse.x*1.5)*cos(position.y*2.8+mouse.y*1.5)*.06;
+        float elev=(n-.5)*.28+mInfluence;
         vElevation=elev;
         vec3 newPos=position+normal*elev;
         gl_Position=projectionMatrix*modelViewMatrix*vec4(newPos,1.0);
@@ -1532,36 +1532,44 @@ function initHeroMesh(){
       varying vec3 vNormal;
       varying vec3 vPos;
       void main(){
-        /* Dark chrome / liquid metal — premium, matches water bg */
-        vec3 dark      = vec3(0.012,0.016,0.022); /* near-black base   */
-        vec3 chrome    = vec3(0.68,0.75,0.80);    /* silver reflection  */
-        vec3 waterRefl = vec3(0.04,0.20,0.45);    /* water bg reflected */
-        vec3 lime      = vec3(0.792,1.0,0.0);     /* brand edge accent  */
-        vec3 coldWhite = vec3(0.82,0.94,1.00);    /* specular highlight  */
+        /* ─── DARK CHROME / LIQUID MERCURY ───────────────────────
+           Philosophy: invisible black center → blazing chrome rim.
+           Like a dark planet with polished metal atmosphere. */
+        vec3 pitch  = vec3(0.006,0.008,0.014); /* near-black core   */
+        vec3 chrome = vec3(0.72,0.80,0.88);    /* polished silver   */
+        vec3 rimIce = vec3(0.22,0.60,0.95);    /* water-reflected blue rim */
+        vec3 lime   = vec3(0.792,1.0,0.0);     /* brand razor edge  */
+        vec3 hotW   = vec3(0.92,0.98,1.00);    /* cool white hotspot */
 
-        float elev=clamp(vElevation*2.0+.5,0.,1.);
-        float nDotV=max(dot(normalize(vNormal),vec3(0.,0.,1.)),0.);
-        float fresnel=pow(1.-nDotV,2.2);
-        float sharpEdge=pow(1.-nDotV,5.5);
+        vec3 N=normalize(vNormal);
+        float nDotV=max(dot(N,vec3(0.,0.,1.)),0.);
 
-        /* Interior: very dark with subtle water reflection tint */
-        vec3 col=mix(dark,waterRefl*0.18,elev*0.4);
+        /* Fresnel: exponent 3.5 = tight, dramatic rim */
+        float fr=pow(1.-nDotV,3.5);
+        float razor=pow(1.-nDotV,7.0);
 
-        /* Chrome rim — like polished metal catching the water light */
-        col+=chrome*fresnel*0.38;
-        col+=waterRefl*fresnel*0.28;
+        /* Start black */
+        vec3 col=pitch;
 
-        /* Two tight specular hotspots — glass/metal quality */
-        float spec1=pow(nDotV,32.0);
-        float spec2=pow(max(dot(normalize(vNormal),normalize(vec3(0.4,0.7,0.6))),0.),20.0);
-        col+=coldWhite*spec1*0.90;
-        col+=coldWhite*spec2*0.35;
+        /* Chrome rim shell */
+        col+=chrome*fr*0.70;
+        col+=rimIce*fr*0.40;
 
-        /* Razor lime accent at extreme silhouette edge only */
-        col+=lime*sharpEdge*0.18;
+        /* Primary off-axis hotspot — upper-left catch light */
+        vec3 L1=normalize(vec3(-0.55,0.75,0.55));
+        float s1=pow(max(dot(N,L1),0.),38.0);
+        col+=hotW*s1*1.40;
 
-        /* Alpha: glass-dark center, chrome rim */
-        float alpha=mix(0.20,0.92,fresnel)+spec1*0.06;
+        /* Secondary softer fill — lower-right */
+        vec3 L2=normalize(vec3(0.40,-0.30,0.88));
+        float s2=pow(max(dot(N,L2),0.),16.0);
+        col+=rimIce*s2*0.50;
+
+        /* Razor lime at silhouette only */
+        col+=lime*razor*0.30;
+
+        /* Alpha: near-zero center, solid chrome rim + hotspot */
+        float alpha=fr*0.94+s1*0.28+razor*0.04+0.03;
         gl_FragColor=vec4(col,clamp(alpha,0.,1.));
       }
     `,
