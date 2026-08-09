@@ -24,8 +24,8 @@ Project chapters show: index number, title, one-line description, tag list. Real
 ## Architecture
 
 - **Single file:** `index.html` at repo root. No build step.
-- **Libraries (CDN, deferred):** Three.js (r160+) and GSAP 3 + ScrollTrigger.
-- **Scroll model:** body height = 7 × 100vh sections. ScrollTrigger maps overall progress → camera path (position/rotation lerp between per-chapter waypoints) and per-chapter DOM overlay timelines (fade/slide).
+- **Libraries (CDN):** Three.js r160 via import map (SRI-pinned). GSAP dropped during implementation — scroll→camera mapping and overlay fades are simple lerp math in the render loop, so vanilla JS covers it with one less dependency.
+- **Scroll model:** body height = 7 × 100vh sections. Render loop maps native scroll progress → camera path (position lerp between per-chapter waypoints) and per-chapter DOM overlay opacity/translate.
 - **Scene:** one Three.js scene containing all chapter set-pieces placed along the camera path; fog + per-chapter color grading (background/fog/light colors lerp with progress).
 - **Overlays:** absolutely-positioned DOM per chapter; GSAP toggles visibility/transform by scroll progress.
 - **Nav:** 7 dots, click = smooth scroll to chapter; active state tracks progress.
