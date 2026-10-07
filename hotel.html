@@ -52,6 +52,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satosh
 }
 @media (max-width:640px){
   .hint{display:none}
+  .hud p{display:none}
   .stats{gap:12px 20px}
   .stats dd{font-size:20px}
 }
@@ -67,7 +68,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satosh
   <dl class="stats">
     <div><dt>Floors</dt><dd id="stat-floors">—</dd></div>
     <div><dt>Height</dt><dd id="stat-height">—</dd></div>
-    <div><dt>Rooms</dt><dd id="stat-rooms">—</dd></div>
+    <div><dt>Windows</dt><dd id="stat-windows">—</dd></div>
     <div><dt>Pool</dt><dd>1</dd></div>
   </dl>
 </header>
@@ -399,7 +400,7 @@ const carColors = [0x8fa3ff, 0xd6ff4f, 0xeef0f6, 0x2a2f3c, 0xff6b6b, 0x2ee6c8];
 /* ─── Stats in the HUD ────────────────────────────────── */
 document.getElementById('stat-floors').textContent = TOWER.floors + 'F';
 document.getElementById('stat-height').textContent = Math.round(towerTop + 12) + ' m';
-document.getElementById('stat-rooms').textContent = '≈ ' + winSpecs.length; // roughly one window per room
+document.getElementById('stat-windows').textContent = winSpecs.length;
 
 /* ─── Day / night ─────────────────────────────────────── */
 let night = false;
