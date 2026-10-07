@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAX Hotel — 3D Model</title>
+<meta name="description" content="Interactive 3D model of a hotel, built with Three.js.">
+<meta name="theme-color" content="#05060a">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#05060a;
+  --text:#eef0f6;
+  --muted:rgba(238,240,246,.55);
+  --line:rgba(238,240,246,.16);
+  --acc:#d6ff4f;
+  --pad:clamp(16px,4vw,48px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satoshi',system-ui,sans-serif;overflow:hidden}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+
+.hud{
+  position:fixed;left:var(--pad);top:var(--pad);z-index:2;pointer-events:none;
+  max-width:min(340px,calc(100vw - 2*var(--pad)));
+}
+.hud h1{font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(28px,5vw,44px);letter-spacing:.02em;line-height:1}
+.hud h1 span{color:var(--acc)}
+.hud p{color:var(--muted);font-size:14px;line-height:1.5;margin-top:10px}
+
+.stats{display:grid;grid-template-columns:repeat(2,auto);gap:14px 28px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.stats dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stats dd{font-family:'Clash Display',sans-serif;font-size:24px;font-weight:600;margin-top:2px}
+
+.controls{
+  position:fixed;left:50%;bottom:var(--pad);transform:translateX(-50%);z-index:2;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:calc(100vw - 2*16px);
+}
+.controls button{
+  font-size:14px;padding:11px 18px;border-radius:999px;
+  border:1px solid var(--line);background:rgba(5,6,10,.6);backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);transition:border-color .2s,color .2s;
+}
+.controls button:hover,.controls button:focus-visible{border-color:var(--acc);color:var(--acc);outline:none}
+.controls button[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+
+.hint{
+  position:fixed;right:var(--pad);bottom:calc(var(--pad) + 4px);z-index:2;pointer-events:none;
+  font-size:12px;color:var(--muted);text-align:right;line-height:1.6;
+}
+@media (max-width:640px){
+  .hint{display:none}
+  .stats{gap:12px 20px}
+  .stats dd{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="scene" aria-label="Interactive 3D model of a hotel"></canvas>
+
+<header class="hud">
+  <h1>JAX <span>Hotel</span></h1>
+  <p>A procedurally built 3D model of a 13-storey hotel with a lobby podium, guest wings, pool and landscaped road.</p>
+  <dl class="stats">
+    <div><dt>Floors</dt><dd id="stat-floors">—</dd></div>
+    <div><dt>Height</dt><dd id="stat-height">—</dd></div>
+    <div><dt>Rooms</dt><dd id="stat-rooms">—</dd></div>
+    <div><dt>Pool</dt><dd>1</dd></div>
+  </dl>
+</header>
+
+<nav class="controls" aria-label="View controls">
+  <button id="btn-rotate" aria-pressed="false">Auto-rotate</button>
+  <button id="btn-night" aria-pressed="false">Night view</button>
+  <button id="btn-reset">Reset view</button>
+</nav>
+
+<div class="hint">Drag to orbit<br>Scroll to zoom<br>Right-drag to pan</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ─── Renderer, scene, camera ─────────────────────────── */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const DAY_SKY = 0x161c2b;
+const NIGHT_SKY = 0x05060a;
+scene.background = new THREE.Color(DAY_SKY);
+scene.fog = new THREE.Fog(DAY_SKY, 110, 280);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 600);
+const HOME = { pos: new THREE.Vector3(56, 30, 74), target: new THREE.Vector3(0, 14, 0) };
+camera.position.copy(HOME.pos);
+
+const controls = new OrbitControls(camera, canvas);
+controls.target.copy(HOME.target);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 22;
+controls.maxDistance = 180;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.autoRotateSpeed = 0.6;
+controls.update();
+
+/* ─── Lighting ────────────────────────────────────────── */
+const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x1a1408, 0.9);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xfff4e6, 2.2);
+sun.position.set(45, 70, 35);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 220 });
+sun.shadow.camera.updateProjectionMatrix();
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+
+// Warm light under the entrance canopy, only switched on at night
+const entranceLight = new THREE.PointLight(0xffc98a, 0, 45, 2);
+entranceLight.position.set(0, 6, 16);
+scene.add(entranceLight);
+
+/* ─── Ground, road, grid ──────────────────────────────── */
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(190, 80),
+  new THREE.MeshStandardMaterial({ color: 0x14171f, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(190, 95, 0x2a3142, 0x181d29);
+grid.position.y = 0.02;
+grid.material.transparent = true;
+grid.material.opacity = 0.45;
+scene.add(grid);
+
+const road = new THREE.Mesh(
+  new THREE.PlaneGeometry(190, 14),
+  new THREE.MeshStandardMaterial({ color: 0x1f232d, roughness: 0.85 })
+);
+road.rotation.x = -Math.PI / 2;
+road.position.set(0, 0.03, 26);
+road.receiveShadow = true;
+scene.add(road);
+
+// Dashed centre line
+const dashGeo = new THREE.BoxGeometry(3, 0.02, 0.22);
+const dashMat = new THREE.MeshBasicMaterial({ color: 0xe6e9f2, transparent: true, opacity: 0.55 });
+const dashes = new THREE.InstancedMesh(dashGeo, dashMat, 60);
+const dummy = new THREE.Object3D();
+for (let i = 0; i < 60; i++) {
+  dummy.position.set(-88 + i * 3, 0.05, 26);
+  dummy.updateMatrix();
+  dashes.setMatrixAt(i, dummy.matrix);
+}
+scene.add(dashes);
+
+/* ─── Hotel group ─────────────────────────────────────── */
+const hotel = new THREE.Group();
+scene.add(hotel);
+
+const lineMat = new THREE.LineBasicMaterial({ color: 0x8fa3ff, transparent: true, opacity: 0.28 });
+
+function block(w, h, d, color, x, y, z, { edges = true, rough = 0.6 } = {}) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0.05 }));
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  hotel.add(mesh);
+  if (edges) {
+    const line = new THREE.LineSegments(new THREE.EdgesGeometry(geo), lineMat);
+    line.position.copy(mesh.position);
+    hotel.add(line);
+  }
+  return mesh;
+}
+
+/* ─── Podium: lobby level ─────────────────────────────── */
+const PODIUM_TOP = 6;
+block(30, PODIUM_TOP, 20, 0xc9b79c, 0, PODIUM_TOP / 2, 0, { rough: 0.8 });
+
+// Lobby glass across the front of the podium
+const lobbyGlass = new THREE.Mesh(
+  new THREE.PlaneGeometry(14, 4.6),
+  new THREE.MeshStandardMaterial({ color: 0x3b6fa0, roughness: 0.1, metalness: 0.4, transparent: true, opacity: 0.55 })
+);
+lobbyGlass.position.set(0, 2.5, 10.03);
+hotel.add(lobbyGlass);
+
+// Lit sign above the lobby
+function makeSignTexture() {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 160;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0a0c12';
+  g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#d6ff4f';
+  g.font = '700 96px Arial, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.letterSpacing = '18px';
+  g.fillText('JAX HOTEL', c.width / 2, c.height / 2 + 4);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const sign = new THREE.Mesh(
+  new THREE.PlaneGeometry(12, 1.9),
+  new THREE.MeshBasicMaterial({ map: makeSignTexture() })
+);
+sign.position.set(0, 5.4, 10.06);
+hotel.add(sign);
+
+// Entrance canopy on two columns
+block(11, 0.5, 6, 0x2a2f3c, 0, 6.6, 14, { rough: 0.4 });
+const colMat = new THREE.MeshStandardMaterial({ color: 0x3a4152, roughness: 0.4, metalness: 0.3 });
+for (const x of [-4.8, 4.8]) {
+  const col = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 6.2, 16), colMat);
+  col.position.set(x, 3.1, 16.6);
+  col.castShadow = true;
+  hotel.add(col);
+}
+
+/* ─── Tower ───────────────────────────────────────────── */
+const TOWER = { w: 16, d: 14, floors: 13, base: PODIUM_TOP, h: 42, z: -3 };
+const towerTop = TOWER.base + TOWER.h;
+block(TOWER.w, TOWER.h, TOWER.d, 0xe9ecf3, 0, TOWER.base + TOWER.h / 2, TOWER.z, { rough: 0.45 });
+
+// Roof: parapet slab, plant room and antenna
+block(TOWER.w - 2, 1.2, TOWER.d - 2, 0x2a2f3c, 0, towerTop + 0.6, TOWER.z, { rough: 0.5 });
+block(6, 3, 5, 0x1c2130, 0, towerTop + 2.7, TOWER.z, { rough: 0.5 });
+const antennaMat = new THREE.MeshStandardMaterial({ color: 0x9aa3b5, metalness: 0.7, roughness: 0.3 });
+const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 8, 8), antennaMat);
+antenna.position.set(0, towerTop + 7.2, TOWER.z);
+antenna.castShadow = true;
+hotel.add(antenna);
+const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff3b3b });
+const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), beaconMat);
+beacon.position.set(0, towerTop + 11.3, TOWER.z);
+hotel.add(beacon);
+
+/* ─── Guest wings ─────────────────────────────────────── */
+const WINGS = [
+  { w: 10, d: 12, h: 30, x: -14, z: -5 },
+  { w: 10, d: 12, h: 24, x: 14, z: -5 },
+];
+for (const wing of WINGS) {
+  block(wing.w, wing.h, wing.d, 0xdfe3ec, wing.x, PODIUM_TOP + wing.h / 2, wing.z, { rough: 0.5 });
+}
+
+/* ─── Window instances ────────────────────────────────── */
+// Every window is one instance; each one can be lit or dark depending on the mode.
+const winSpecs = [];
+const WIN_W = 1.0, WIN_H = 1.5, WIN_D = 0.12;
+
+// Add windows for one box, facing all four sides
+function addWindows({ w, d, h, floors, base, cx, cz }) {
+  const fh = h / floors;
+  // Each face: rotation, which axis it runs along, its position on the normal axis, and its span
+  const faces = [
+    { ry: 0, axis: 'z', at: cz + d / 2, sign: 1, span: w, c: cx },
+    { ry: Math.PI, axis: 'z', at: cz - d / 2, sign: -1, span: w, c: cx },
+    { ry: Math.PI / 2, axis: 'x', at: cx + w / 2, sign: 1, span: d, c: cz },
+    { ry: -Math.PI / 2, axis: 'x', at: cx - w / 2, sign: -1, span: d, c: cz },
+  ];
+  for (const f of faces) {
+    const cols = Math.max(2, Math.floor(f.span / 1.9));
+    const step = f.span / cols;
+    const out = f.at + f.sign * 0.05; // sit just proud of the wall
+    for (let fl = 0; fl < floors; fl++) {
+      const y = base + (fl + 0.5) * fh;
+      for (let c = 0; c < cols; c++) {
+        const s = -f.span / 2 + (c + 0.5) * step;
+        const pos = f.axis === 'z'
+          ? new THREE.Vector3(f.c + s, y, out)
+          : new THREE.Vector3(out, y, f.c + s);
+        winSpecs.push({ pos, ry: f.ry });
+      }
+    }
+  }
+}
+
+addWindows({ w: TOWER.w, d: TOWER.d, h: TOWER.h, floors: TOWER.floors, base: TOWER.base, cx: 0, cz: TOWER.z });
+for (const wing of WINGS) {
+  const floors = Math.round(wing.h / 2.6);
+  addWindows({ w: wing.w, d: wing.d, h: wing.h, floors, base: PODIUM_TOP, cx: wing.x, cz: wing.z });
+}
+
+const winGeo = new THREE.BoxGeometry(WIN_W, WIN_H, WIN_D);
+const winMat = new THREE.MeshBasicMaterial();
+const windows = new THREE.InstancedMesh(winGeo, winMat, winSpecs.length);
+const dayColors = [];
+const litColors = [];
+const litFlags = [];
+const nightDark = new THREE.Color(0x0c1424);
+
+winSpecs.forEach((spec, i) => {
+  dummy.position.copy(spec.pos);
+  dummy.rotation.set(0, spec.ry, 0);
+  dummy.updateMatrix();
+  windows.setMatrixAt(i, dummy.matrix);
+
+  // Vary glass tone a little so the facade does not look flat
+  const v = 0.5 + Math.random() * 0.12;
+  dayColors.push(new THREE.Color().setHSL(0.57, 0.45, v));
+  litColors.push(new THREE.Color().setHSL(0.11, 0.9, 0.62 + Math.random() * 0.12));
+  litFlags.push(Math.random() < 0.38);
+});
+hotel.add(windows);
+
+function paintWindows(night) {
+  for (let i = 0; i < winSpecs.length; i++) {
+    const c = night ? (litFlags[i] ? litColors[i] : nightDark) : dayColors[i];
+    windows.setColorAt(i, c);
+  }
+  windows.instanceColor.needsUpdate = true;
+}
+
+/* ─── Rooftop pool, deck and garden ───────────────────── */
+block(12, 0.4, 10, 0xb8a98f, 27, 0.2, 2, { rough: 0.8 });
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(9, 6.5),
+  new THREE.MeshStandardMaterial({ color: 0x2ee6c8, roughness: 0.05, metalness: 0.1, emissive: 0x0a3d40, emissiveIntensity: 0.6 })
+);
+water.rotation.x = -Math.PI / 2;
+water.position.set(27, 0.42, 2);
+water.receiveShadow = true;
+hotel.add(water);
+
+/* ─── Trees ───────────────────────────────────────────── */
+// Seeded random so the landscaping stays the same on every load
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 0.9 });
+const leafMat = new THREE.MeshStandardMaterial({ color: 0x2f6b4a, roughness: 0.85, flatShading: true });
+function tree(x, z, scale = 1) {
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 2.4 * scale, 8), trunkMat);
+  trunk.position.set(x, 1.2 * scale, z);
+  trunk.castShadow = true;
+  hotel.add(trunk);
+  const leaves = new THREE.Mesh(new THREE.IcosahedronGeometry(2.1 * scale, 1), leafMat);
+  leaves.position.set(x, 3.6 * scale, z);
+  leaves.castShadow = true;
+  hotel.add(leaves);
+}
+for (let i = 0; i < 14; i++) {
+  tree(-62 + i * 9.5 + rand() * 2, 38 + rand() * 2, 0.9 + rand() * 0.3);
+}
+for (let i = 0; i < 9; i++) {
+  tree(-44 + i * 11 + rand() * 2, -22 - rand() * 2, 1 + rand() * 0.4);
+}
+for (const x of [-22, 36]) {
+  tree(x, 12 + rand() * 2, 0.9);
+}
+
+/* ─── Street lamps ────────────────────────────────────── */
+const lampMat = new THREE.MeshStandardMaterial({ color: 0xffe2a8, emissive: 0xffc070, emissiveIntensity: 0.2 });
+const postMat = new THREE.MeshStandardMaterial({ color: 0x2b303d, roughness: 0.5, metalness: 0.4 });
+for (let i = 0; i < 7; i++) {
+  const x = -60 + i * 20;
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 6, 8), postMat);
+  post.position.set(x, 3, 34);
+  post.castShadow = true;
+  hotel.add(post);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), lampMat);
+  bulb.position.set(x, 6.2, 34);
+  hotel.add(bulb);
+}
+
+/* ─── Parked cars ─────────────────────────────────────── */
+const carColors = [0x8fa3ff, 0xd6ff4f, 0xeef0f6, 0x2a2f3c, 0xff6b6b, 0x2ee6c8];
+[[-12, 19], [-6, 19], [6, 19], [12, 33], [-18, 33], [0, 33]].forEach(([x, z], i) => {
+  const car = block(4, 1.3, 1.9, carColors[i], x, 0.65, z, { edges: false, rough: 0.35 });
+  car.material.metalness = 0.4;
+});
+
+/* ─── Stats in the HUD ────────────────────────────────── */
+document.getElementById('stat-floors').textContent = TOWER.floors + 'F';
+document.getElementById('stat-height').textContent = Math.round(towerTop + 12) + ' m';
+document.getElementById('stat-rooms').textContent = '≈ ' + winSpecs.length; // roughly one window per room
+
+/* ─── Day / night ─────────────────────────────────────── */
+let night = false;
+function setNight(on) {
+  night = on;
+  const sky = new THREE.Color(on ? NIGHT_SKY : DAY_SKY);
+  scene.background.copy(sky);
+  scene.fog.color.copy(sky);
+  hemi.intensity = on ? 0.22 : 0.9;
+  sun.intensity = on ? 0.12 : 2.2;
+  entranceLight.intensity = on ? 70 : 0;
+  lampMat.emissiveIntensity = on ? 2.6 : 0.2;
+  paintWindows(on);
+  btnNight.setAttribute('aria-pressed', String(on));
+  btnNight.textContent = on ? 'Day view' : 'Night view';
+}
+
+/* ─── Controls ────────────────────────────────────────── */
+const btnRotate = document.getElementById('btn-rotate');
+const btnNight = document.getElementById('btn-night');
+const btnReset = document.getElementById('btn-reset');
+
+btnRotate.addEventListener('click', () => {
+  controls.autoRotate = !controls.autoRotate;
+  btnRotate.setAttribute('aria-pressed', String(controls.autoRotate));
+});
+btnNight.addEventListener('click', () => setNight(!night));
+btnReset.addEventListener('click', () => {
+  camera.position.copy(HOME.pos);
+  controls.target.copy(HOME.target);
+  controls.update();
+});
+
+setNight(false);
+
+/* ─── Resize and loop ─────────────────────────────────── */
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const clock = new THREE.Clock();
+function frame() {
+  const t = clock.getElapsedTime();
+  // Pulse the antenna beacon
+  const pulse = 0.6 + 0.4 * Math.sin(t * 3);
+  beaconMat.color.setRGB(pulse, 0.15 * pulse, 0.15 * pulse);
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
