@@ -33,6 +33,13 @@ body{
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
+#sky{
+  position:fixed;inset:0;opacity:0;transition:opacity 1.2s ease;pointer-events:none;
+  background:radial-gradient(120% 90% at 58% 42%,#33437a 0%,#1a2350 55%,#0c1130 100%);
+}
+.night #sky{opacity:1}
+.night .hint{color:rgba(255,255,255,.6)}
+#mode{font-size:15px;line-height:1;padding:8px 12px}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
 .static #gl{display:none}
 
@@ -138,11 +145,13 @@ nav.pill .on,nav.pill button:hover,nav.pill a:hover{background:var(--soft)}
 </head>
 <body>
 
-<canvas id="gl" aria-label="3D island of projects. Use the project list to navigate."></canvas>
+<div id="sky"></div>
+<canvas id="gl"aria-label="3D island of projects. Use the project list to navigate."></canvas>
 
 <a class="logo" href="#" data-go="intro"><i>J</i><span><b>jax</b><small>creative developer</small></span></a>
 
 <nav class="pill" aria-label="Main">
+  <button id="mode" aria-label="Switch to night" title="Day / night">☾</button>
   <button data-go="intro">Projects</button>
   <button data-go="about">About</button>
   <a class="gh" href="https://github.com/bcool5869-coder" target="_blank" rel="noopener">GitHub ↗</a>
@@ -238,6 +247,22 @@ var PROJECTS = [
   }
   window.UI = { show: show };
 
+  /* day / night: remembered choice, else the visitor's local clock */
+  var root = document.documentElement, modeBtn = document.getElementById('mode'), saved = null;
+  try { saved = localStorage.getItem('jax-mode'); } catch(e){}
+  var h = new Date().getHours();
+  function setMode(n){
+    root.classList.toggle('night', n);
+    modeBtn.textContent = n ? '☀' : '☾';
+    modeBtn.setAttribute('aria-label', n ? 'Switch to day' : 'Switch to night');
+  }
+  setMode(saved ? saved === 'night' : (h >= 19 || h < 6));
+  modeBtn.addEventListener('click', function(){
+    var n = !root.classList.contains('night');
+    setMode(n);
+    try { localStorage.setItem('jax-mode', n ? 'night' : 'day'); } catch(e){}
+  });
+
   document.addEventListener('click', function(e){
     var go = e.target.closest('[data-go]');
     if (go){ e.preventDefault(); show(go.dataset.go); return; }
@@ -277,7 +302,8 @@ function init(){
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
   camera.position.set(20, 17, 20);
 
-  scene.add(new THREE.HemisphereLight(0xfff4dc, 0x9a7650, 1.5));
+  const hemi = new THREE.HemisphereLight(0xfff4dc, 0x9a7650, 1.5);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 2.6);
   sun.position.set(10, 18, 7);
   sun.castShadow = true;
@@ -579,22 +605,23 @@ function init(){
     ['kalos', 0, 2], ['video-studio', 1, 2], ['screenmirror', 2, 2], ['nebula', 3, 2],
   ];
   const byId = {}; PROJECTS.forEach(p => { byId[p.id] = p; });
-  const buildings = {}, hitboxes = [];
+  const buildings = {}, hitboxes = [], decor = [];
   const hitGeo = new THREE.BoxGeometry(2.5, 4.2, 2.5), hitMat = new THREE.MeshBasicMaterial({ visible: false });
 
-  for (const [id, c, r] of LAYOUT){
+  LAYOUT.forEach(([id, c, r], n) => {
     const g = new THREE.Group();
     g.position.set(COLS[c], 0, ROWS[r]);
     island.add(g);
-    if (id === 'pond'){ updates.push(pond(g)); continue; }
+    const delay = .7 + n * .09;   // pop-in order for the intro
+    if (id === 'pond'){ updates.push(pond(g)); decor.push({ g, delay }); return; }
     flat(add(g, rb(2.5, .1, 2.5, .05), C.pad, 0, .05, 0));
     const inner = new THREE.Group(); inner.position.y = .1; g.add(inner);
-    if (id === 'ferris'){ updates.push(ferris(inner)); continue; }
+    if (id === 'ferris'){ updates.push(ferris(inner)); decor.push({ g: inner, delay }); return; }
     updates.push(B[byId[id].b](inner));
     const hb = new THREE.Mesh(hitGeo, hitMat); hb.position.y = 2.1; hb.userData.pid = id;
     g.add(hb); hitboxes.push(hb);
-    buildings[id] = { g: inner, pos: g.position, s: 1 };
-  }
+    buildings[id] = { g: inner, pos: g.position, s: 1, delay, hop: 0 };
+  });
 
   /* trees, flowers, clouds, rocks, a little car */
   const trees = [];
@@ -653,6 +680,94 @@ function init(){
     car.rotation.y = Math.atan2(-(q[1] - p[1]), q[0] - p[0]);
   });
 
+  /* waterfall spilling off the front edge */
+  flat(add(island, rb(.6, .05, .7, .02), C.water, -5, .02, 5.15, { roughness: .15 }));
+  const fallTex = (() => {
+    const cv = document.createElement('canvas'); cv.width = 32; cv.height = 128;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#8fdcf5'; x.fillRect(0, 0, 32, 128);
+    x.fillStyle = 'rgba(255,255,255,.75)';
+    for (let i = 0; i < 18; i++) x.fillRect((i * 7) % 30, (i * 41) % 128, 2, 18 + (i * 13) % 30);
+    const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(1, 3);
+    tx.colorSpace = THREE.SRGBColorSpace;
+    return tx;
+  })();
+  const fadeTex = (() => {
+    const cv = document.createElement('canvas'); cv.width = 4; cv.height = 64;
+    const x = cv.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 64);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(.6, '#999'); gr.addColorStop(1, '#000');
+    x.fillStyle = gr; x.fillRect(0, 0, 4, 64);
+    return new THREE.CanvasTexture(cv);
+  })();
+  const fall = new THREE.Mesh(new THREE.PlaneGeometry(.55, 6.5),
+    new THREE.MeshBasicMaterial({ map: fallTex, alphaMap: fadeTex, transparent: true, depthWrite: false }));
+  fall.position.set(-5, -3.2, 5.58); island.add(fall);
+  const dropN = 120, dropPos = new Float32Array(dropN * 3), dropSeed = Array.from({ length: dropN }, () => Math.random());
+  const drops = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(dropPos, 3)),
+    new THREE.PointsMaterial({ color: 0xe7f8ff, size: 3, sizeAttenuation: false, transparent: true, opacity: .9, depthWrite: false }));
+  island.add(drops);
+  updates.push(t => {
+    fallTex.offset.y = t * 1.2;
+    for (let i = 0; i < dropN; i++){
+      const s = dropSeed[i], k = (s * 7.3 + t * .7) % 1;
+      dropPos[i * 3] = -5.28 + s * .56;
+      dropPos[i * 3 + 1] = -k * 6.5;
+      dropPos[i * 3 + 2] = 5.62 + k * k * .6 * s;
+    }
+    drops.geometry.attributes.position.needsUpdate = true;
+  });
+
+  /* birds circling the island */
+  const wingGeo = [rb(.34, .03, .12, .01).translate(.17, 0, 0), rb(.34, .03, .12, .01).translate(-.17, 0, 0)];
+  const birds = [0, 1, 2, 3, 4].map(i => {
+    const b = new THREE.Group(); b.scale.setScalar(.8 + (i % 2) * .25); scene.add(b);
+    const wr = new THREE.Mesh(wingGeo[0], mat(C.white)), wl = new THREE.Mesh(wingGeo[1], mat(C.white));
+    const body = new THREE.Mesh(sph(.07), mat(C.white)); body.scale.z = 1.8;
+    b.add(wr, wl, body);
+    return { b, wr, wl, i };
+  });
+  updates.push(t => birds.forEach(({ b, wr, wl, i }) => {
+    const a = t * .22 + i * .32, R = 9.5 + (i % 3) * .5;
+    b.position.set(Math.cos(a) * R, 5 + Math.sin(t * .8 + i) * .4 + (i % 2) * .5, Math.sin(a) * R);
+    b.rotation.y = -a;
+    const f = Math.sin(t * 9 + i * 1.7) * .55;
+    wr.rotation.z = f; wl.rotation.z = -f;
+  }));
+
+  /* night: street lamps, stars, brighter windows */
+  const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff3bf, emissive: 0xffc56b, emissiveIntensity: .2 });
+  const lamps = [[-3.6, -1.38], [3.6, -1.38], [-3.6, 1.38], [3.6, 1.38]].map(([x, z]) => {
+    const l = new THREE.Group(); l.position.set(x, 0, z); island.add(l);
+    add(l, cyl(.035, .05, 1.1, 8), C.dark, 0, .55, 0);
+    add(l, rb(.18, .05, .18, .02), C.dark, 0, 1.12, 0);
+    add(l, sph(.1), bulbMat, 0, 1.02, 0).castShadow = false;
+    const pl = new THREE.PointLight(0xffc56b, 0, 4.5, 1.4); pl.position.y = 1; l.add(pl);
+    return pl;
+  });
+  const starPos = new Float32Array(500 * 3);
+  for (let i = 0; i < 500; i++){
+    const v = new THREE.Vector3(rnd() - .5, rnd() * .9 - .2, rnd() - .5).normalize().multiplyScalar(45 + rnd() * 20);
+    v.toArray(starPos, i * 3);
+  }
+  const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(starPos, 3)),
+    new THREE.PointsMaterial({ color: 0xfff8e1, size: 2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false }));
+  scene.add(stars);
+  const glowMats = Object.values(mats).filter(m => m.emissive.getHex() && m.emissiveIntensity > 0);
+  glowMats.forEach(m => { m.userData.base = m.emissiveIntensity; });
+  const DAY = { hemi: new THREE.Color(0xfff4dc), sun: new THREE.Color(0xffffff) };
+  const NIGHT = { hemi: new THREE.Color(0x7d8fd6), sun: new THREE.Color(0x9fb4ff) };
+  let night = document.documentElement.classList.contains('night') ? 1 : 0;
+  function applyNight(dt){
+    const goal = document.documentElement.classList.contains('night') ? 1 : 0;
+    night += (goal - night) * Math.min(1, dt * 2.5);
+    hemi.intensity = 1.5 - .85 * night; hemi.color.lerpColors(DAY.hemi, NIGHT.hemi, night);
+    sun.intensity = 2.6 - 1.8 * night; sun.color.lerpColors(DAY.sun, NIGHT.sun, night);
+    glowMats.forEach(m => { m.emissiveIntensity = m.userData.base * (1 + 3 * night); });
+    bulbMat.emissiveIntensity = .2 + 2.6 * night;
+    lamps.forEach(l => { l.intensity = 9 * night; });
+    stars.material.opacity = night;
+  }
+
   /* ── camera rig ──────────────────────────────── */
   const controls = new OrbitControls(camera, canvas);
   controls.target.set(0, .3, 0);
@@ -680,6 +795,7 @@ function init(){
   function flyTo(v){
     const b = buildings[v];
     focused = b ? v : null;
+    if (b && !reduced) b.hop = 1e-6;
     const s = cardShift();
     off.gx = s.x; off.gy = s.y;
     /* home zoom: fit the island (~19 x 14 world units on screen) into the area the card leaves free */
@@ -718,12 +834,20 @@ function init(){
   camera.zoom = .7; // small intro zoom-in
 
   const clock = new THREE.Clock();
-  let t = 0;
+  let t = 0, T = reduced ? 99 : 0;   // T = real time since load, drives the intro
+  const backOut = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * (x - 1) ** 3 + 1.7 * (x - 1) ** 2;
   function frame(){
     requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), .05);
+    T += dt;
     if (!reduced) t += dt;
     for (const u of updates) u(t);
+    applyNight(dt);
+
+    /* intro: island drops in, then buildings pop up one by one */
+    const drop = Math.min(1, T / 1.1);
+    island.position.y = (1 - (1 - (1 - drop) ** 3)) * 7;
+    for (const d of decor) d.g.scale.setScalar(Math.max(1e-3, backOut((T - d.delay) / .5)));
 
     hovered = pointerIn ? pick() : null;
     canvas.style.cursor = hovered ? 'pointer' : '';
@@ -732,7 +856,9 @@ function init(){
     for (const id in buildings){
       const b = buildings[id], goal = id === hovered ? 1.08 : 1;
       b.s += (goal - b.s) * Math.min(1, dt * 12);
-      b.g.scale.setScalar(b.s);
+      b.g.scale.setScalar(Math.max(1e-3, b.s * backOut((T - b.delay) / .5)));
+      if (b.hop){ b.hop = Math.min(1, b.hop + dt * 2.2); if (b.hop === 1) b.hop = 0; }
+      b.g.position.y = .1 + Math.sin(b.hop * Math.PI) * .45;
     }
 
     const k = 1 - Math.exp(-dt * 3.5);
